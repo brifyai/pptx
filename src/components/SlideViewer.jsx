@@ -613,6 +613,9 @@ function ExtractedAssetOverlay({ asset, slideWidth, slideHeight }) {
     title = 'Imagen con transparencia'
   }
   
+  // Aplicar color de fondo del slide al contenedor del asset
+  const backgroundColor = asset.backgroundColor || 'transparent'
+  
   return (
     <div 
       className={classNames}
@@ -623,7 +626,8 @@ function ExtractedAssetOverlay({ asset, slideWidth, slideHeight }) {
         width: `${width}%`,
         height: `${height}%`,
         pointerEvents: 'none',
-        zIndex: asset.hasAnimation ? 15 : 10
+        zIndex: asset.hasAnimation ? 15 : 10,
+        backgroundColor: backgroundColor  // Aplicar color de fondo del slide
       }}
       title={title}
     >

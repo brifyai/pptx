@@ -9,6 +9,9 @@ from PIL import Image
 import os
 import tempfile
 
+# Importar procesador de imágenes
+from image_processor import remove_white_background, smart_background_removal
+
 # Intentar importar conversores de imágenes
 try:
     from pptx_to_images_custom import convert_pptx_to_images_custom
@@ -133,9 +136,57 @@ def detect_slide_type(slide) -> str:
     else:
         return 'content'
 
+def get_theme_colors(slide) -> Dict[str, str]:
+    """
+    Extrae los colores del tema del PPTX
+    """
+    try:
+        from lxml import etree
+        
+        namespaces = {
+            'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+        }
+        
+        # Acceder al tema a través del master
+        master = slide.slide_layout.slide_master
+        theme_part = master.part.part_related_by('http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme')
+        theme_xml = theme_part.blob
+        theme_root = etree.fromstring(theme_xml)
+        
+        # Buscar el esquema de colores
+        color_scheme = theme_root.find('.//a:clrScheme', namespaces)
+        
+        if color_scheme is None:
+            return {}
+        
+        theme_colors = {}
+        
+        for color_elem in color_scheme:
+            color_name = color_elem.tag.split('}')[-1]
+            
+            # Buscar el valor del color
+            srgb = color_elem.find('.//a:srgbClr', namespaces)
+            sys_clr = color_elem.find('.//a:sysClr', namespaces)
+            
+            if srgb is not None:
+                color_val = srgb.get('val')
+                theme_colors[color_name] = f"#{color_val}"
+            elif sys_clr is not None:
+                color_val = sys_clr.get('lastClr')
+                if color_val:
+                    theme_colors[color_name] = f"#{color_val}"
+        
+        return theme_colors
+        
+    except Exception as e:
+        print(f"   ⚠️ Error extrayendo colores del tema: {e}")
+        return {}
+
+
 def extract_background(slide) -> Dict[str, Any]:
     """
     Extrae información del fondo de la diapositiva
+    Lee directamente del XML y usa los colores reales del tema
     """
     background = {
         "type": "solid",
@@ -143,13 +194,133 @@ def extract_background(slide) -> Dict[str, Any]:
     }
     
     try:
-        if slide.background.fill.type == 1:  # Solid fill
-            background["type"] = "solid"
-            background["color"] = get_color_rgb(slide.background.fill.fore_color)
-        elif slide.background.fill.type == 2:  # Gradient
-            background["type"] = "gradient"
-    except:
-        pass
+        from lxml import etree
+        
+        # Obtener colores del tema primero
+        theme_colors = get_theme_colors(slide)
+        print(f"   🎨 Colores del tema: {theme_colors}")
+        
+        # Obtener el XML del slide
+        slide_part = slide.part
+        slide_xml = slide_part.blob
+        root = etree.fromstring(slide_xml)
+        
+        # Namespaces de PowerPoint
+        namespaces = {
+            'p': 'http://schemas.openxmlformats.org/presentationml/2006/main',
+            'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+        }
+        
+        # Buscar el elemento de fondo: p:cSld/p:bg
+        bg_element = root.find('.//p:cSld/p:bg', namespaces)
+        
+        if bg_element is not None:
+            # Buscar fill sólido: bgPr/a:solidFill/a:srgbClr
+            solid_fill = bg_element.find('.//a:solidFill/a:srgbClr', namespaces)
+            if solid_fill is not None:
+                color_val = solid_fill.get('val')
+                if color_val:
+                    background["color"] = f"#{color_val}"
+                    background["type"] = "solid"
+                    print(f"   ✅ Color de fondo extraído del XML: {background['color']}")
+                    return background
+            
+            # Buscar fill con esquema de color: bgPr/a:solidFill/a:schemeClr
+            scheme_fill = bg_element.find('.//a:solidFill/a:schemeClr', namespaces)
+            if scheme_fill is not None:
+                scheme_val = scheme_fill.get('val')
+                print(f"   ℹ️ Fondo usa esquema de color: {scheme_val}")
+                
+                # Usar el color real del tema si está disponible
+                if scheme_val in theme_colors:
+                    background["color"] = theme_colors[scheme_val]
+                    print(f"   ✅ Color del tema aplicado: {background['color']}")
+                else:
+                    # Fallback a colores por defecto
+                    scheme_colors_default = {
+                        'bg1': '#FFFFFF',
+                        'bg2': '#F2F2F2',
+                        'tx1': '#000000',
+                        'tx2': '#1F1F1F',
+                        'accent1': '#4472C4',
+                        'accent2': '#ED7D31',
+                        'accent3': '#A5A5A5',
+                        'accent4': '#FFC000',
+                        'accent5': '#5B9BD5',
+                        'accent6': '#70AD47',
+                        'dk1': '#000000',
+                        'lt1': '#FFFFFF',
+                        'dk2': '#1F1F1F',
+                        'lt2': '#EEECE1'
+                    }
+                    background["color"] = scheme_colors_default.get(scheme_val, '#FFFFFF')
+                    print(f"   ⚠️ Color por defecto aplicado: {background['color']}")
+                
+                return background
+            
+            # Buscar gradiente
+            grad_fill = bg_element.find('.//a:gradFill', namespaces)
+            if grad_fill is not None:
+                background["type"] = "gradient"
+                # Obtener el primer color del gradiente
+                first_color = grad_fill.find('.//a:srgbClr', namespaces)
+                if first_color is not None:
+                    color_val = first_color.get('val')
+                    if color_val:
+                        background["color"] = f"#{color_val}"
+                        print(f"   ✅ Color de gradiente extraído: {background['color']}")
+                        return background
+        
+        # Si no hay elemento de fondo en el slide, buscar en el layout
+        print(f"   ℹ️ No se encontró fondo en el slide, buscando en layout...")
+        layout_part = slide.slide_layout.part
+        layout_xml = layout_part.blob
+        layout_root = etree.fromstring(layout_xml)
+        
+        bg_element = layout_root.find('.//p:cSld/p:bg', namespaces)
+        if bg_element is not None:
+            solid_fill = bg_element.find('.//a:solidFill/a:srgbClr', namespaces)
+            if solid_fill is not None:
+                color_val = solid_fill.get('val')
+                if color_val:
+                    background["color"] = f"#{color_val}"
+                    print(f"   ✅ Color de fondo extraído del layout: {background['color']}")
+                    return background
+            
+            scheme_fill = bg_element.find('.//a:solidFill/a:schemeClr', namespaces)
+            if scheme_fill is not None:
+                scheme_val = scheme_fill.get('val')
+                
+                # Usar el color real del tema
+                if scheme_val in theme_colors:
+                    background["color"] = theme_colors[scheme_val]
+                    print(f"   ✅ Color del tema (layout) aplicado: {background['color']}")
+                else:
+                    scheme_colors_default = {
+                        'bg1': '#FFFFFF',
+                        'bg2': '#F2F2F2',
+                        'tx1': '#000000',
+                        'tx2': '#1F1F1F',
+                        'accent1': '#4472C4',
+                        'accent2': '#ED7D31',
+                        'accent3': '#A5A5A5',
+                        'accent4': '#FFC000',
+                        'accent5': '#5B9BD5',
+                        'accent6': '#70AD47',
+                    }
+                    background["color"] = scheme_colors_default.get(scheme_val, '#FFFFFF')
+                    print(f"   ⚠️ Color por defecto (layout) aplicado: {background['color']}")
+                
+                return background
+        
+    except Exception as e:
+        print(f"   ⚠️ Error extrayendo fondo del XML: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Si todo falla, usar blanco por defecto
+    background["color"] = "#FFFFFF"
+    print(f"   ℹ️ No se pudo detectar color de fondo, usando blanco por defecto")
     
     return background
 
@@ -353,6 +524,7 @@ def extract_all_assets(prs) -> Dict[str, Any]:
     """
     Extrae todos los assets (imágenes, logos) del PPTX
     Preserva transparencias y formatos originales
+    Incluye el color de fondo del slide para cada asset
     """
     assets = {
         "logos": [],
@@ -369,6 +541,11 @@ def extract_all_assets(prs) -> Dict[str, Any]:
         print(f"\n🔍 Analizando slide {slide_idx + 1} para detectar animaciones...")
         animated_shape_ids = detect_animated_shapes(slide, prs)
         print(f"   Resultado: {len(animated_shape_ids)} shapes animados detectados: {animated_shape_ids}")
+        
+        # Extraer color de fondo del slide
+        slide_bg_color = extract_background(slide)
+        bg_color_hex = slide_bg_color.get('color', '#FFFFFF')  # Default blanco
+        print(f"   🎨 Color de fondo del slide: {bg_color_hex}")
         
         for shape in slide.shapes:
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
@@ -413,6 +590,14 @@ def extract_all_assets(prs) -> Dict[str, Any]:
                     # Crear asset
                     img_base64 = base64.b64encode(image_bytes).decode('utf-8')
                     mime_type = content_type if content_type else f"image/{img_format}"
+                    original_image = f"data:{mime_type};base64,{img_base64}"
+                    
+                    # PROCESAR IMAGEN: Remover fondo blanco y aplicar color del slide
+                    processed_image = original_image
+                    if bg_color_hex and bg_color_hex != "#FFFFFF":
+                        print(f"      🎨 Procesando imagen para aplicar fondo {bg_color_hex}...")
+                        processed_image = smart_background_removal(original_image, bg_color_hex)
+                        print(f"      ✅ Imagen procesada con nuevo fondo")
                     
                     asset = {
                         "id": f"asset_{slide_idx}_{shape.shape_id}",
@@ -422,13 +607,14 @@ def extract_all_assets(prs) -> Dict[str, Any]:
                         "hasTransparency": has_transparency,
                         "hasAnimation": has_animation,
                         "isLogo": is_logo,
+                        "backgroundColor": bg_color_hex,  # Color de fondo del slide
                         "position": {
                             "x": shape.left,
                             "y": shape.top,
                             "width": shape.width,
                             "height": shape.height
                         },
-                        "imageBase64": f"data:{mime_type};base64,{img_base64}"
+                        "imageBase64": processed_image  # Usar imagen procesada
                     }
                     
                     # Clasificar - priorizar elementos animados
