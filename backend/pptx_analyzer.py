@@ -8,9 +8,25 @@ from io import BytesIO
 from PIL import Image
 import os
 import tempfile
+import sys
+
+# Agregar LibreOffice al path para UNO
+LIBREOFFICE_PROGRAM = r"C:\Program Files\LibreOffice\program"
+if os.path.exists(LIBREOFFICE_PROGRAM) and LIBREOFFICE_PROGRAM not in sys.path:
+    sys.path.insert(0, LIBREOFFICE_PROGRAM)
+    os.environ['PYTHONPATH'] = LIBREOFFICE_PROGRAM + os.pathsep + os.environ.get('PYTHONPATH', '')
 
 # Importar procesador de imágenes
 from image_processor import remove_white_background, smart_background_removal
+
+# Intentar importar UNO API de LibreOffice
+try:
+    from libreoffice_uno_renderer import render_pptx_with_uno, UNO_AVAILABLE
+    if UNO_AVAILABLE:
+        print("✅ LibreOffice UNO API disponible - renderizado de alta calidad")
+except ImportError as e:
+    UNO_AVAILABLE = False
+    print(f"⚠️ LibreOffice UNO API no disponible: {e}")
 
 # Intentar importar conversores de imágenes
 try:
@@ -52,12 +68,22 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
     """
     prs = Presentation(pptx_path)
     
-    # Intentar generar previews de slides (prioridad: LibreOffice > Full Renderer > Custom > Placeholder)
+    # Intentar generar previews de slides (prioridad: UNO API > LibreOffice > Full Renderer > Placeholder)
     slide_images = []
     
-    if LIBREOFFICE_AVAILABLE:
+    if UNO_AVAILABLE:
         try:
-            print("🎨 Usando LibreOffice para generar previews...")
+            print("🎨 Usando LibreOffice UNO API (máxima calidad)...")
+            slide_images = render_pptx_with_uno(pptx_path)
+            print(f"✅ Generadas {len(slide_images)} imágenes con UNO API")
+        except Exception as e:
+            print(f"⚠️ Error con UNO API: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    if not slide_images and LIBREOFFICE_AVAILABLE:
+        try:
+            print("🎨 Usando LibreOffice headless...")
             slide_images = convert_pptx_to_images(pptx_path)
             print(f"✅ Generadas {len(slide_images)} imágenes con LibreOffice")
         except Exception as e:
@@ -74,24 +100,6 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
             print(f"⚠️ Error con renderizador completo: {e}")
             import traceback
             traceback.print_exc()
-    
-    if not slide_images and CUSTOM_RENDERER_AVAILABLE:
-        try:
-            print("🎨 Usando renderizador personalizado...")
-            slide_images = render_pptx_to_images(pptx_path)
-            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador personalizado")
-        except Exception as e:
-            print(f"⚠️ Error con renderizador personalizado: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    if not slide_images and CUSTOM_RENDERER_OLD_AVAILABLE:
-        try:
-            print("🎨 Usando renderizador antiguo (python-pptx + Pillow)...")
-            slide_images = convert_pptx_to_images_custom(pptx_path)
-            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador antiguo")
-        except Exception as e:
-            print(f"⚠️ Error con renderizador antiguo: {e}")
     
     if not slide_images:
         print("⚠️ Usando placeholders")
