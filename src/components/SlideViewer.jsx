@@ -8,7 +8,7 @@ const ChartEditor = lazy(() => import('./ChartEditor'))
 function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity }) {
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
-  const [showExtractedAssets, setShowExtractedAssets] = useState(true)
+  const [showExtractedAssets, setShowExtractedAssets] = useState(false) // Deshabilitado por defecto
   const [contextMenu, setContextMenu] = useState(null)
   const [editingSlideId, setEditingSlideId] = useState(null)
   const [slideNameInput, setSlideNameInput] = useState('')

@@ -14,10 +14,24 @@ from image_processor import remove_white_background, smart_background_removal
 
 # Intentar importar conversores de imágenes
 try:
-    from pptx_to_images_custom import convert_pptx_to_images_custom
+    from pptx_full_renderer import render_pptx_complete
+    FULL_RENDERER_AVAILABLE = True
+except ImportError:
+    FULL_RENDERER_AVAILABLE = False
+    print("⚠️ Renderizador completo no disponible")
+
+try:
+    from pptx_renderer import render_pptx_to_images
     CUSTOM_RENDERER_AVAILABLE = True
 except ImportError:
     CUSTOM_RENDERER_AVAILABLE = False
+    print("⚠️ Renderizador personalizado no disponible")
+
+try:
+    from pptx_to_images_custom import convert_pptx_to_images_custom
+    CUSTOM_RENDERER_OLD_AVAILABLE = True
+except ImportError:
+    CUSTOM_RENDERER_OLD_AVAILABLE = False
 
 try:
     from pptx_to_images_aspose import convert_pptx_to_images_aspose
@@ -38,10 +52,30 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
     """
     prs = Presentation(pptx_path)
     
-    # Intentar generar previews de slides (prioridad: LibreOffice > Custom > Aspose > Placeholder)
+    # Intentar generar previews de slides (prioridad: Full Renderer > Custom > LibreOffice > Placeholder)
     slide_images = []
     
-    if LIBREOFFICE_AVAILABLE:
+    if FULL_RENDERER_AVAILABLE:
+        try:
+            print("🎨 Usando renderizador completo...")
+            slide_images = render_pptx_complete(pptx_path)
+            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador completo")
+        except Exception as e:
+            print(f"⚠️ Error con renderizador completo: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    if not slide_images and CUSTOM_RENDERER_AVAILABLE:
+        try:
+            print("🎨 Usando renderizador personalizado...")
+            slide_images = render_pptx_to_images(pptx_path)
+            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador personalizado")
+        except Exception as e:
+            print(f"⚠️ Error con renderizador personalizado: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    if not slide_images and LIBREOFFICE_AVAILABLE:
         try:
             print("🎨 Usando LibreOffice para generar previews...")
             slide_images = convert_pptx_to_images(pptx_path)
@@ -51,16 +85,16 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
             import traceback
             traceback.print_exc()
     
-    if not slide_images and CUSTOM_RENDERER_AVAILABLE:
+    if not slide_images and CUSTOM_RENDERER_OLD_AVAILABLE:
         try:
-            print("🎨 Usando renderizador personalizado (python-pptx + Pillow)...")
+            print("🎨 Usando renderizador antiguo (python-pptx + Pillow)...")
             slide_images = convert_pptx_to_images_custom(pptx_path)
-            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador custom")
+            print(f"✅ Generadas {len(slide_images)} imágenes con renderizador antiguo")
         except Exception as e:
-            print(f"⚠️ Error con renderizador custom: {e}")
+            print(f"⚠️ Error con renderizador antiguo: {e}")
     
     if not slide_images:
-        print("⚠️ Usando placeholders (instala Aspose para ver diseño real)")
+        print("⚠️ Usando placeholders")
         from pptx_to_images import generate_placeholder_image
         slide_images = [generate_placeholder_image(i + 1) for i in range(len(prs.slides))]
     
@@ -90,11 +124,24 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
     }
     
     for slide_idx, slide in enumerate(prs.slides):
+        # Extraer fondo del XML primero
+        slide_bg = extract_background(slide)
+        bg_color_hex = slide_bg.get('color', '#FFFFFF')
+        
+        # Si el fondo es blanco pero la preview muestra otro color, extraer de la imagen
+        if bg_color_hex == '#FFFFFF' and slide_idx < len(slide_images):
+            dominant_color = extract_dominant_color_from_preview(slide_images[slide_idx])
+            # Solo usar el color dominante si NO es blanco
+            if dominant_color != '#FFFFFF':
+                print(f"   🎨 Color dominante detectado en preview: {dominant_color}")
+                bg_color_hex = dominant_color
+                slide_bg['color'] = dominant_color
+        
         slide_data = {
             "number": slide_idx + 1,
             "type": detect_slide_type(slide),
             "layout": slide.slide_layout.name,
-            "background": extract_background(slide),
+            "background": slide_bg,
             "preview": slide_images[slide_idx] if slide_idx < len(slide_images) else None,
             "textAreas": [],
             "imageAreas": [],
@@ -518,6 +565,55 @@ def rgb_to_hex(rgb):
     Convierte RGB a hexadecimal
     """
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+
+
+def extract_dominant_color_from_preview(preview_base64: str) -> str:
+    """
+    Extrae el color dominante de una imagen preview del slide
+    Útil cuando el fondo no se puede extraer del XML
+    """
+    try:
+        from PIL import Image
+        import base64
+        from io import BytesIO
+        from collections import Counter
+        
+        # Decodificar imagen
+        if ',' in preview_base64:
+            preview_base64 = preview_base64.split(',')[1]
+        
+        image_data = base64.b64decode(preview_base64)
+        img = Image.open(BytesIO(image_data))
+        
+        # Redimensionar para análisis más rápido
+        img = img.resize((100, 100))
+        img = img.convert('RGB')
+        
+        # Obtener pixels de las esquinas (donde suele estar el fondo)
+        pixels = []
+        width, height = img.size
+        
+        # Muestrear esquinas y bordes
+        for x in range(0, width, 10):
+            pixels.append(img.getpixel((x, 0)))  # Borde superior
+            pixels.append(img.getpixel((x, height-1)))  # Borde inferior
+        
+        for y in range(0, height, 10):
+            pixels.append(img.getpixel((0, y)))  # Borde izquierdo
+            pixels.append(img.getpixel((width-1, y)))  # Borde derecho
+        
+        # Encontrar el color más común
+        color_counts = Counter(pixels)
+        dominant_color = color_counts.most_common(1)[0][0]
+        
+        # Convertir a hex
+        hex_color = f"#{dominant_color[0]:02x}{dominant_color[1]:02x}{dominant_color[2]:02x}"
+        
+        return hex_color
+        
+    except Exception as e:
+        print(f"   ⚠️ Error extrayendo color dominante: {e}")
+        return "#FFFFFF"
 
 
 def extract_all_assets(prs) -> Dict[str, Any]:
