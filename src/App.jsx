@@ -1070,6 +1070,12 @@ function AppContent() {
               onSlideRename={handleSlideRename}
               onSlideAdd={handleSlideAdd}
               logActivity={logActivity}
+              onSlideOptionsOpen={(slide, index) => {
+                if (isMobile) {
+                  setSelectedSlide(slide)
+                  setShowSlideOptions(true)
+                }
+              }}
             />
           </ResizablePanel>
           
@@ -1079,6 +1085,8 @@ function AppContent() {
               slideIndex={currentSlide}
               onSlideUpdate={handleSlideUpdate}
               extractedAssets={extractedAssets}
+              onNavigateSlide={handleNavigateSlide}
+              totalSlides={slides.length}
             />
           </div>
           

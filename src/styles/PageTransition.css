@@ -1,0 +1,50 @@
+/* Page Transition Animations */
+
+.page-transition {
+  --transition-duration: 300ms;
+  transition: all var(--transition-duration) ease-out;
+}
+
+/* Fade Animation */
+.page-transition-fade {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-fade.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Slide Animation */
+.page-transition-slide {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.page-transition-slide.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Scale Animation */
+.page-transition-scale {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.page-transition-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Slide Up Animation */
+.page-transition-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-slide-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

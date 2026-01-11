@@ -1,5 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import Draggable from 'react-draggable'
+import { useSwipe, usePinch } from '../hooks/useSwipe'
+import { useMobile } from '../hooks/useMobile'
 import '../styles/MainSlideViewer.css'
 
 const ChartRenderer = lazy(() => import('./ChartRenderer'))
@@ -327,10 +329,39 @@ function DraggableAsset({ asset, index, isSelected, onSelect, onRemove, onPositi
 }
 
 // Componente principal
-function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets }) {
+function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, onNavigateSlide, totalSlides }) {
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
   const [showExtractedAssets] = useState(false) // Deshabilitado por defecto
+  const isMobile = useMobile(768)
+
+  // Gestos mobile: Swipe para navegar entre slides
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (isMobile && onNavigateSlide && slideIndex < totalSlides - 1) {
+        onNavigateSlide(slideIndex + 1)
+      }
+    },
+    onSwipeRight: () => {
+      if (isMobile && onNavigateSlide && slideIndex > 0) {
+        onNavigateSlide(slideIndex - 1)
+      }
+    },
+    minSwipeDistance: 50,
+    maxSwipeTime: 300
+  })
+
+  // Gestos mobile: Pinch to zoom
+  const { scale, isPinching, resetScale, ...pinchHandlers } = usePinch({
+    onPinchEnd: ({ scale }) => {
+      // Reset zoom después de 1 segundo
+      if (scale !== 1) {
+        setTimeout(resetScale, 1000)
+      }
+    },
+    minScale: 0.8,
+    maxScale: 3
+  })
 
   // Early return si no hay slide
   if (!slide) {
@@ -382,9 +413,20 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets }) 
 
   return (
     <div className="main-slide-viewer">
-      <div className="slide-canvas" onClick={() => setSelectedAsset(null)}>
+      <div 
+        className="slide-canvas" 
+        onClick={() => setSelectedAsset(null)}
+        {...(isMobile ? swipeHandlers : {})}
+      >
         {slide.preview ? (
-          <div className="slide-preview-container">
+          <div 
+            className="slide-preview-container"
+            {...(isMobile ? pinchHandlers : {})}
+            style={isMobile && isPinching ? {
+              transform: `scale(${scale})`,
+              transition: isPinching ? 'none' : 'transform 0.3s ease-out'
+            } : {}}
+          >
             <img 
               src={slide.preview} 
               alt={`Lámina ${slideIndex + 1}`}

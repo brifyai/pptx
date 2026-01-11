@@ -1,13 +1,16 @@
 import { useState, lazy, Suspense, useEffect } from 'react'
 import Draggable from 'react-draggable'
+import { useLongPress } from '../hooks/useSwipe'
+import { useMobile } from '../hooks/useMobile'
 import '../styles/SlideViewer.css'
 
 const ChartRenderer = lazy(() => import('./ChartRenderer'))
 const ChartEditor = lazy(() => import('./ChartEditor'))
 
-function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity }) {
+function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity, onSlideOptionsOpen }) {
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
+  const isMobile = useMobile(768)
   const [showExtractedAssets, setShowExtractedAssets] = useState(false) // Deshabilitado por defecto
   const [contextMenu, setContextMenu] = useState(null)
   const [editingSlideId, setEditingSlideId] = useState(null)
@@ -164,7 +167,18 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
           </div>
         )}
         
-        {slides.map((slide, index) => (
+        {slides.map((slide, index) => {
+          // Long press handler para mobile
+          const longPressHandlers = isMobile && onSlideOptionsOpen ? useLongPress(
+            (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onSlideOptionsOpen(slide, index)
+            },
+            500
+          ) : {}
+          
+          return (
           <div
             key={slide.id}
             className={`thumbnail ${index === currentSlide ? 'active' : ''} ${draggedSlide === index ? 'dragging' : ''} ${dragOverSlide === index ? 'drag-over' : ''}`}
@@ -176,6 +190,7 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
             onDragEnd={handleDragEnd}
             onClick={() => onSlideChange(index)}
             onContextMenu={(e) => handleContextMenu(e, index)}
+            {...longPressHandlers}
           >
             <div className="thumbnail-number">{index + 1}</div>
             <div className="thumbnail-preview">
@@ -230,7 +245,8 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
               <span className="material-icons">more_vert</span>
             </button>
           </div>
-        ))}
+          )
+        })}
         
         {/* Botón para agregar slide */}
         <button
