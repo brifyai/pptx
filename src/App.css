@@ -979,3 +979,259 @@ body.editor-mode {
   border-color: var(--border-light);
   border-top-color: var(--ppt-orange);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE - Phase 1 Foundation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Mobile Layout Adjustments */
+@media (max-width: 768px) {
+  /* Body adjustments for mobile */
+  body.editor-mode {
+    padding-top: calc(56px + env(safe-area-inset-top));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  /* Hide desktop header on mobile */
+  .app-header {
+    display: none;
+  }
+
+  /* Main layout adjustments */
+  .main-layout {
+    height: 100vh;
+    padding-top: calc(56px + env(safe-area-inset-top));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .main-layout-content {
+    flex-direction: column;
+  }
+
+  /* Welcome screen mobile */
+  .welcome-screen {
+    padding: 20px;
+  }
+
+  .welcome-content {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .welcome-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .welcome-content p {
+    font-size: 0.9rem;
+  }
+
+  /* Upload zone mobile */
+  .upload-zone {
+    padding: 40px 20px;
+    border-radius: 16px;
+  }
+
+  .upload-zone h3 {
+    font-size: 1.2rem;
+  }
+
+  .upload-btn {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+  }
+
+  /* Hero CTAs mobile */
+  .hero-ctas {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-primary-large,
+  .btn-secondary-large {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Steps indicator mobile */
+  .steps-indicator {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .step {
+    padding: 12px;
+  }
+
+  /* Slide counter mobile */
+  .slide-counter {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+  }
+
+  /* Header actions mobile */
+  .header-actions {
+    gap: 6px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* App container mobile */
+  .app-container {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  /* Prompt section mobile */
+  .prompt-section {
+    padding: 16px;
+  }
+
+  .prompt-input {
+    min-height: 120px;
+    font-size: 0.95rem;
+  }
+
+  /* Analysis result mobile */
+  .analysis-result {
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  .slide-info {
+    padding: 12px;
+  }
+}
+
+/* Mobile Portrait (< 480px) */
+@media (max-width: 480px) {
+  .welcome-content h1 {
+    font-size: 1.3rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .btn-primary-large,
+  .btn-secondary-large {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+  }
+
+  .upload-zone {
+    padding: 30px 16px;
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+  }
+
+  .upload-zone h3 {
+    font-size: 1.1rem;
+  }
+
+  .upload-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet Portrait (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .main-layout-content {
+    flex-direction: row;
+  }
+
+  /* Show sidebar on tablet */
+  .slide-thumbnails {
+    width: 120px;
+  }
+}
+
+/* Tablet Landscape (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-header {
+    padding: 12px 20px;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .main-layout-content {
+    flex-direction: row;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  .btn-primary,
+  .btn-secondary,
+  .btn-icon,
+  .nav-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-icon:hover,
+  .upload-zone:hover {
+    transform: none;
+  }
+
+  /* Add active states instead */
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-icon:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Prevent text selection on mobile for better UX */
+@media (max-width: 768px) {
+  .mobile-tab-bar,
+  .mobile-header,
+  .mobile-menu {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Smooth scrolling on mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}

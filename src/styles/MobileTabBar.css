@@ -1,0 +1,119 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE TAB BAR - Bottom Navigation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-tab-bar {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-light);
+  border-top: 1px solid var(--border-light);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  color: var(--text-muted);
+}
+
+.tab-item .tab-icon {
+  font-size: 24px;
+  transition: all 0.2s ease;
+}
+
+.tab-item .tab-label {
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-item.active {
+  color: var(--ppt-orange);
+}
+
+.tab-item.active .tab-icon {
+  transform: scale(1.1);
+}
+
+/* FAB (Floating Action Button) - Botón central destacado */
+.tab-item.fab {
+  position: relative;
+  margin-top: -20px;
+}
+
+.tab-item.fab .tab-icon {
+  font-size: 32px;
+  background: var(--ppt-orange);
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.4);
+}
+
+.tab-item.fab:active .tab-icon {
+  transform: scale(0.95);
+}
+
+.tab-item.fab .tab-label {
+  color: var(--ppt-orange);
+  font-weight: 600;
+}
+
+/* Ripple effect on tap */
+.tab-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(210, 71, 38, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.tab-item:active::before {
+  width: 48px;
+  height: 48px;
+}
+
+/* Mobile breakpoints */
+@media (max-width: 768px) {
+  .mobile-tab-bar {
+    display: flex;
+  }
+}
+
+/* Dark theme */
+.dark-theme .mobile-tab-bar {
+  background: var(--bg-light);
+  border-color: var(--border-light);
+}
+
+.dark-theme .tab-item {
+  color: var(--text-muted);
+}
+
+.dark-theme .tab-item.active {
+  color: var(--ppt-orange);
+}

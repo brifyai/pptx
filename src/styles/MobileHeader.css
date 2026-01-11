@@ -1,0 +1,85 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE HEADER - Top Navigation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-header {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 8px;
+  padding-top: env(safe-area-inset-top);
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-header-left,
+.mobile-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobile-header-left {
+  flex: 1;
+}
+
+.mobile-header-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-btn {
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.header-btn:active {
+  background: rgba(0, 0, 0, 0.05);
+  transform: scale(0.95);
+}
+
+.header-btn .material-icons {
+  font-size: 24px;
+}
+
+.header-btn.profile-btn {
+  color: var(--ppt-orange);
+}
+
+/* Mobile breakpoints */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* Dark theme */
+.dark-theme .mobile-header {
+  background: var(--bg-light);
+  border-color: var(--border-light);
+}
+
+.dark-theme .header-btn:active {
+  background: rgba(255, 255, 255, 0.1);
+}
