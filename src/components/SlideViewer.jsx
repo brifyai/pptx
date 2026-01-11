@@ -7,6 +7,107 @@ import '../styles/SlideViewer.css'
 const ChartRenderer = lazy(() => import('./ChartRenderer'))
 const ChartEditor = lazy(() => import('./ChartEditor'))
 
+// Componente separado para thumbnail con long press
+function ThumbnailItem({
+  slide,
+  index,
+  currentSlide,
+  draggedSlide,
+  dragOverSlide,
+  editingSlideId,
+  slideNameInput,
+  isMobile,
+  onSlideChange,
+  onContextMenu,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  onSlideOptionsOpen,
+  onSlideNameChange,
+  onSaveRename,
+  onCancelRename
+}) {
+  // Long press handler para mobile (ahora fuera del map)
+  const longPressHandlers = isMobile && onSlideOptionsOpen ? useLongPress(
+    (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onSlideOptionsOpen(slide, index)
+    },
+    500
+  ) : {}
+
+  return (
+    <div
+      className={`thumbnail ${index === currentSlide ? 'active' : ''} ${draggedSlide === index ? 'dragging' : ''} ${dragOverSlide === index ? 'drag-over' : ''}`}
+      draggable
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDrop(e, index)}
+      onDragEnd={onDragEnd}
+      onClick={() => onSlideChange(index)}
+      onContextMenu={(e) => onContextMenu(e, index)}
+      {...longPressHandlers}
+    >
+      <div className="thumbnail-number">{index + 1}</div>
+      <div className="thumbnail-preview">
+        {slide.preview ? (
+          <img 
+            src={slide.preview} 
+            alt={`Slide ${index + 1}`}
+            draggable="false"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px', pointerEvents: 'none' }}
+          />
+        ) : (
+          <div className="mini-slide">
+            <span className="material-icons">
+              {slide.type === 'title' ? 'title' : 'view_agenda'}
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Nombre editable del slide */}
+      {editingSlideId === slide.id ? (
+        <div className="thumbnail-name-edit" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="text"
+            value={slideNameInput}
+            onChange={(e) => onSlideNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSaveRename()
+              if (e.key === 'Escape') onCancelRename()
+            }}
+            onBlur={onSaveRename}
+            autoFocus
+            className="slide-name-input"
+          />
+        </div>
+      ) : (
+        <div className="thumbnail-name" title={slide.name || `Lámina ${index + 1}`}>
+          {slide.name || `Lámina ${index + 1}`}
+        </div>
+      )}
+      
+      {/* Botón de opciones */}
+      <button
+        type="button"
+        className="thumbnail-options"
+        onClick={(e) => {
+          e.stopPropagation()
+          onContextMenu(e, index)
+        }}
+        title="Opciones"
+      >
+        <span className="material-icons">more_vert</span>
+      </button>
+    </div>
+  )
+}
+
 function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity, onSlideOptionsOpen }) {
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
@@ -167,86 +268,30 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
           </div>
         )}
         
-        {slides.map((slide, index) => {
-          // Long press handler para mobile
-          const longPressHandlers = isMobile && onSlideOptionsOpen ? useLongPress(
-            (e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onSlideOptionsOpen(slide, index)
-            },
-            500
-          ) : {}
-          
-          return (
-          <div
+        {slides.map((slide, index) => (
+          <ThumbnailItem
             key={slide.id}
-            className={`thumbnail ${index === currentSlide ? 'active' : ''} ${draggedSlide === index ? 'dragging' : ''} ${dragOverSlide === index ? 'drag-over' : ''}`}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            slide={slide}
+            index={index}
+            currentSlide={currentSlide}
+            draggedSlide={draggedSlide}
+            dragOverSlide={dragOverSlide}
+            editingSlideId={editingSlideId}
+            slideNameInput={slideNameInput}
+            isMobile={isMobile}
+            onSlideChange={onSlideChange}
+            onContextMenu={handleContextMenu}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
+            onDrop={handleDrop}
             onDragEnd={handleDragEnd}
-            onClick={() => onSlideChange(index)}
-            onContextMenu={(e) => handleContextMenu(e, index)}
-            {...longPressHandlers}
-          >
-            <div className="thumbnail-number">{index + 1}</div>
-            <div className="thumbnail-preview">
-              {slide.preview ? (
-                <img 
-                  src={slide.preview} 
-                  alt={`Slide ${index + 1}`}
-                  draggable="false"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px', pointerEvents: 'none' }}
-                />
-              ) : (
-                <div className="mini-slide">
-                  <span className="material-icons">
-                    {slide.type === 'title' ? 'title' : 'view_agenda'}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Nombre editable del slide */}
-            {editingSlideId === slide.id ? (
-              <div className="thumbnail-name-edit" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="text"
-                  value={slideNameInput}
-                  onChange={(e) => setSlideNameInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveRename()
-                    if (e.key === 'Escape') handleCancelRename()
-                  }}
-                  onBlur={handleSaveRename}
-                  autoFocus
-                  className="slide-name-input"
-                />
-              </div>
-            ) : (
-              <div className="thumbnail-name" title={slide.name || `Lámina ${index + 1}`}>
-                {slide.name || `Lámina ${index + 1}`}
-              </div>
-            )}
-            
-            {/* Botón de opciones */}
-            <button
-              type="button"
-              className="thumbnail-options"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleContextMenu(e, index)
-              }}
-              title="Opciones"
-            >
-              <span className="material-icons">more_vert</span>
-            </button>
-          </div>
-          )
-        })}
+            onSlideOptionsOpen={onSlideOptionsOpen}
+            onSlideNameChange={setSlideNameInput}
+            onSaveRename={handleSaveRename}
+            onCancelRename={handleCancelRename}
+          />
+        ))}
         
         {/* Botón para agregar slide */}
         <button
