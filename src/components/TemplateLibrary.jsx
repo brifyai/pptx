@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TemplateGridSkeleton } from './SkeletonScreen'
 import '../styles/TemplateLibrary.css'
 
 const STORAGE_KEY = 'ai_presentation_templates'
@@ -6,6 +7,7 @@ const STORAGE_KEY = 'ai_presentation_templates'
 function TemplateLibrary({ onSelectTemplate, onClose, currentTemplateFile }) {
   const [templates, setTemplates] = useState([])
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [newTemplateName, setNewTemplateName] = useState('')
   const [showSaveForm, setShowSaveForm] = useState(false)
 
@@ -14,6 +16,7 @@ function TemplateLibrary({ onSelectTemplate, onClose, currentTemplateFile }) {
   }, [])
 
   const loadTemplates = () => {
+    setLoading(true)
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
@@ -21,6 +24,9 @@ function TemplateLibrary({ onSelectTemplate, onClose, currentTemplateFile }) {
       }
     } catch (error) {
       console.error('Error loading templates:', error)
+    } finally {
+      // Simular delay mínimo para mostrar skeleton
+      setTimeout(() => setLoading(false), 300)
     }
   }
 
@@ -172,7 +178,9 @@ function TemplateLibrary({ onSelectTemplate, onClose, currentTemplateFile }) {
 
         {/* Lista de templates */}
         <div className="templates-list">
-          {templates.length === 0 ? (
+          {loading ? (
+            <TemplateGridSkeleton count={6} />
+          ) : templates.length === 0 ? (
             <div className="empty-library">
               <span className="material-icons">inventory_2</span>
               <p>No hay templates guardados</p>

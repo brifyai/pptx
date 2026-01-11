@@ -19,6 +19,7 @@ import FontWarning from './components/FontWarning'
 import ResizablePanel from './components/ResizablePanel'
 import Landing from './components/Landing'
 import Auth from './components/Auth'
+import PageTransition from './components/PageTransition'
 import MobileHeader from './components/MobileHeader'
 import MobileTabBar from './components/MobileTabBar'
 import MobileMenu from './components/MobileMenu'
@@ -737,7 +738,11 @@ function AppContent() {
   // Routing basado en path
   // Landing (home) - solo si no hay usuario
   if (path === '/' && !user) {
-    return <Landing onGetStarted={handleGetStarted} />
+    return (
+      <PageTransition type="fade" duration={300} isActive={true}>
+        <Landing onGetStarted={handleGetStarted} />
+      </PageTransition>
+    )
   }
 
   // Login
@@ -746,7 +751,11 @@ function AppContent() {
       navigate('/editor')
       return null
     }
-    return <Auth mode="login" onAuth={handleAuth} onBack={handleBackToLanding} />
+    return (
+      <PageTransition type="slide" duration={300} isActive={true}>
+        <Auth mode="login" onAuth={handleAuth} onBack={handleBackToLanding} />
+      </PageTransition>
+    )
   }
 
   // Registro
@@ -755,7 +764,11 @@ function AppContent() {
       navigate('/editor')
       return null
     }
-    return <Auth mode="register" onAuth={handleAuth} onBack={handleBackToLanding} />
+    return (
+      <PageTransition type="slide" duration={300} isActive={true}>
+        <Auth mode="register" onAuth={handleAuth} onBack={handleBackToLanding} />
+      </PageTransition>
+    )
   }
 
   // Si hay usuario pero está en "/" redirigir a /editor
