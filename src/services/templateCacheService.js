@@ -7,12 +7,29 @@
 const CACHE_KEY = 'ai_presentation_template_cache'
 
 /**
- * Limpia todo el cache
+ * Limpia todo el cache y localStorage si está muy lleno
  */
 export function clearCache() {
   try {
+    // Verificar tamaño del localStorage
+    let totalSize = 0;
+    for (let key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        totalSize += localStorage[key].length + key.length;
+      }
+    }
+    
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    
+    if (totalSize > maxSize) {
+      console.warn(`⚠️ localStorage muy lleno (${(totalSize / 1024 / 1024).toFixed(2)}MB), limpiando completamente...`);
+      localStorage.clear();
+      console.log('✅ localStorage completamente limpiado');
+      return;
+    }
+    
+    // Si no está lleno, solo limpiar caches de templates
     localStorage.removeItem(CACHE_KEY)
-    // Limpiar también otros posibles caches grandes
     const keysToRemove = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
@@ -21,9 +38,16 @@ export function clearCache() {
       }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key))
-    console.log('🗑️ All template caches cleared')
+    console.log('🗑️ Template caches cleared')
   } catch (e) {
     console.warn('Error clearing cache:', e)
+    // Si hay error, intentar limpiar todo
+    try {
+      localStorage.clear();
+      console.log('✅ localStorage limpiado por error');
+    } catch (e2) {
+      console.error('❌ No se pudo limpiar localStorage:', e2);
+    }
   }
 }
 

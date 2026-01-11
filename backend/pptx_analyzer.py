@@ -52,10 +52,20 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
     """
     prs = Presentation(pptx_path)
     
-    # Intentar generar previews de slides (prioridad: Full Renderer > Custom > LibreOffice > Placeholder)
+    # Intentar generar previews de slides (prioridad: LibreOffice > Full Renderer > Custom > Placeholder)
     slide_images = []
     
-    if FULL_RENDERER_AVAILABLE:
+    if LIBREOFFICE_AVAILABLE:
+        try:
+            print("🎨 Usando LibreOffice para generar previews...")
+            slide_images = convert_pptx_to_images(pptx_path)
+            print(f"✅ Generadas {len(slide_images)} imágenes con LibreOffice")
+        except Exception as e:
+            print(f"⚠️ Error con LibreOffice: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    if not slide_images and FULL_RENDERER_AVAILABLE:
         try:
             print("🎨 Usando renderizador completo...")
             slide_images = render_pptx_complete(pptx_path)
@@ -72,16 +82,6 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
             print(f"✅ Generadas {len(slide_images)} imágenes con renderizador personalizado")
         except Exception as e:
             print(f"⚠️ Error con renderizador personalizado: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    if not slide_images and LIBREOFFICE_AVAILABLE:
-        try:
-            print("🎨 Usando LibreOffice para generar previews...")
-            slide_images = convert_pptx_to_images(pptx_path)
-            print(f"✅ Generadas {len(slide_images)} imágenes con LibreOffice")
-        except Exception as e:
-            print(f"⚠️ Error con LibreOffice: {e}")
             import traceback
             traceback.print_exc()
     

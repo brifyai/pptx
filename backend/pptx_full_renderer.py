@@ -336,5 +336,5 @@ def render_pptx_complete(pptx_path: str) -> List[str]:
     """
     Función principal para renderizar PPTX completo
     """
-    renderer = PPTXRenderer(pptx_path, dpi=96, scale=3)
+    renderer = PPTXRenderer(pptx_path, dpi=96, scale=2)  # Reducir escala a 2x
     return renderer.render_all()
