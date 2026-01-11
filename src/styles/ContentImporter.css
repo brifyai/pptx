@@ -43,7 +43,7 @@
 }
 
 .importer-header .material-icons {
-  color: #667eea;
+  color: #D24726;
   font-size: 24px;
 }
 
@@ -88,7 +88,7 @@
 
 .upload-instructions .material-icons {
   font-size: 48px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .upload-instructions p {
@@ -107,7 +107,7 @@
   align-items: center;
   gap: 10px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #D24726;
   color: white;
   border: none;
   border-radius: 12px;
@@ -115,12 +115,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.3);
 }
 
 .upload-content-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(210, 71, 38, 0.4);
 }
 
 .upload-content-btn:disabled {
@@ -148,15 +148,15 @@
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: #f0f3ff;
-  border-left: 3px solid #667eea;
+  background: rgba(210, 71, 38, 0.05);
+  border-left: 3px solid #D24726;
   border-radius: 8px;
   font-size: 0.9rem;
   color: #4b5563;
 }
 
 .mapping-info .material-icons {
-  color: #667eea;
+  color: #D24726;
   font-size: 20px;
 }
 
@@ -233,13 +233,13 @@
 }
 
 .target-select:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .target-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #D24726;
+  box-shadow: 0 0 0 3px rgba(210, 71, 38, 0.1);
 }
 
 /* Actions */
@@ -279,14 +279,14 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #D24726;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(210, 71, 38, 0.4);
 }
 
 .btn-secondary .material-icons,

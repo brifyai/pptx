@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
 import SlideViewer from './components/SlideViewer'
 import ChatPanel from './components/ChatPanel'
+import MainSlideViewer from './components/MainSlideViewer'
 import TemplateUploader from './components/TemplateUploader'
 import ContentImporter from './components/ContentImporter'
 import TemplateLibrary from './components/TemplateLibrary'
@@ -15,11 +16,15 @@ import ContentSuggestions from './components/ContentSuggestions'
 import TextOnlyMode from './components/TextOnlyMode'
 import HeaderDropdown from './components/HeaderDropdown'
 import FontWarning from './components/FontWarning'
+import ResizablePanel from './components/ResizablePanel'
+import Landing from './components/Landing'
+import Auth from './components/Auth'
 import { AlertProvider, useAlert } from './components/CustomAlert'
 import { getChutesConfig } from './services/chutesService'
 import { Router, Route, useRouter } from './SimpleRouter'
 import collaborationService from './services/collaborationService'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useTheme } from './hooks/useTheme'
 
 // Lazy load de features avanzadas (solo se cargan cuando se usan)
 const VoiceCommands = lazy(() => import('./features/VoiceCommands'))
@@ -44,6 +49,10 @@ function App() {
 function AppContent() {
   const { showToast, showWarning, showDeleteConfirm } = useAlert()
   const { path, navigate } = useRouter()
+  const { theme, isDark, toggleTheme } = useTheme()
+  
+  // Estado de autenticación
+  const [user, setUser] = useState(null)
   
   const [hasTemplate, setHasTemplate] = useState(false)
   const [slides, setSlides] = useState([])
@@ -114,7 +123,32 @@ function AppContent() {
     if (!config.isConfigured) {
       console.warn('⚠️ Chutes AI no está configurado. Verifica tu archivo .env')
     }
+
+    // Verificar si hay usuario guardado
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser)
+        setUser(userData)
+      } catch (error) {
+        console.error('Error al cargar usuario:', error)
+        localStorage.removeItem('user')
+      }
+    }
   }, [])
+
+  // Agregar/quitar clase editor-mode al body según la ruta
+  useEffect(() => {
+    if (path === '/editor' && hasTemplate) {
+      document.body.classList.add('editor-mode')
+    } else {
+      document.body.classList.remove('editor-mode')
+    }
+
+    return () => {
+      document.body.classList.remove('editor-mode')
+    }
+  }, [path, hasTemplate])
 
   const handleTemplateUpload = async (file, analysis) => {
     console.log('📋 Plantilla subida:', file.name)
@@ -498,15 +532,32 @@ function AppContent() {
   const handleAssetInsert = (asset) => {
     console.log('📊 Asset insertado:', asset)
     
+    // Preparar el asset con posición inicial si no la tiene
+    const assetWithPosition = {
+      ...asset,
+      position: asset.position || { x: 100, y: 100 },
+      id: Date.now() // ID único para el asset
+    }
+    
     // Insertar asset en la diapositiva actual
     const slide = slides[currentSlide]
     handleSlideUpdate(slide.id, {
       ...slide.content,
-      assets: [...(slide.content.assets || []), asset]
+      assets: [...(slide.content.assets || []), assetWithPosition]
     }, true) // skipLog porque logueamos aquí
     
     setShowAssets(false)
-    logActivity('asset', `${asset.type === 'chart' ? 'Gráfico' : asset.type === 'icon' ? 'Icono' : 'Imagen'} insertado en lámina ${currentSlide + 1}`)
+    
+    // Log descriptivo según tipo
+    const assetLabels = {
+      'chart': 'Gráfico',
+      'icon': 'Icono',
+      'shape': 'Forma',
+      'image': 'Imagen',
+      'template': 'Plantilla'
+    }
+    const label = assetLabels[asset.type] || 'Asset'
+    logActivity('asset', `${label} "${asset.name || asset.icon || asset.chartType || ''}" insertado en lámina ${currentSlide + 1}`)
   }
 
   const handleThemeChange = (newTheme) => {
@@ -634,83 +685,183 @@ function AppContent() {
     return { heading: 'Título', bullets: ['Punto 1', 'Punto 2', 'Punto 3'] }
   }
 
-  if (!hasTemplate || path === '/') {
-    return (
-      <div className="app">
-        <div className="welcome-screen">
-          <div className="welcome-content">
-            <div className="welcome-icon">
-              <span className="material-icons">auto_awesome</span>
-            </div>
-            <h1>AI Presentation Studio</h1>
-            <p>Sube tu plantilla y edita con IA en tiempo real</p>
-            <TemplateUploader onUpload={handleTemplateUpload} />
-            
-            <div className="library-divider">
-              <span>o selecciona de tu biblioteca</span>
-            </div>
-            
-            <button 
-              type="button" 
-              className="open-library-btn"
-              onClick={() => setShowTemplateLibrary(true)}
-            >
-              <span className="material-icons">folder_special</span>
-              Abrir Biblioteca de Templates
-            </button>
-            
-            <button 
-              type="button" 
-              className="open-library-btn text-only-btn"
-              onClick={() => setShowTextOnlyMode(true)}
-            >
-              <span className="material-icons">text_fields</span>
-              Modo Solo Texto
-            </button>
-            
-            <button 
-              type="button" 
-              className="tour-btn"
-              onClick={() => setShowOnboarding(true)}
-            >
-              <span className="material-icons">help_outline</span>
-              Ver tutorial
-            </button>
-          </div>
-        </div>
-        
-        {showTemplateLibrary && (
-          <TemplateLibrary
-            currentTemplateFile={templateFile}
-            onSelectTemplate={handleTemplateFromLibrary}
-            onClose={() => setShowTemplateLibrary(false)}
-          />
-        )}
-        
-        {showTextOnlyMode && (
-          <TextOnlyMode
-            onCreateSlides={handleTextOnlySlides}
-            onClose={() => setShowTextOnlyMode(false)}
-          />
-        )}
-        
-        <OnboardingTour 
-          onComplete={() => setShowOnboarding(false)}
-          forceShow={showOnboarding}
-        />
-        
-        <KeyboardShortcutsHelp
-          isOpen={showKeyboardHelp}
-          onClose={() => setShowKeyboardHelp(false)}
-        />
-      </div>
-    )
+  // Manejo de autenticación
+  const handleGetStarted = (mode) => {
+    if (mode === 'contact') {
+      // Abrir modal de contacto o redirigir
+      window.location.href = 'mailto:contacto@aipresentationstudio.com'
+      return
+    }
+    
+    // Navegar a la ruta correspondiente
+    if (mode === 'login') {
+      navigate('/acceso')
+    } else if (mode === 'register') {
+      navigate('/registro')
+    }
   }
 
-  // Redirigir a / si no hay plantilla pero está en /editor
-  if (!hasTemplate && path === '/editor') {
+  const handleAuth = (userData) => {
+    setUser(userData)
+    navigate('/editor')
+    showToast(`¡Bienvenido${userData.name ? ', ' + userData.name : ''}!`)
+  }
+
+  const handleBackToLanding = () => {
     navigate('/')
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('user')
+    setUser(null)
+    setHasTemplate(false)
+    setSlides([])
+    navigate('/')
+    showToast('Sesión cerrada')
+  }
+
+  // Routing basado en path
+  // Landing (home) - solo si no hay usuario
+  if (path === '/' && !user) {
+    return <Landing onGetStarted={handleGetStarted} />
+  }
+
+  // Login
+  if (path === '/acceso') {
+    if (user) {
+      navigate('/editor')
+      return null
+    }
+    return <Auth mode="login" onAuth={handleAuth} onBack={handleBackToLanding} />
+  }
+
+  // Registro
+  if (path === '/registro') {
+    if (user) {
+      navigate('/editor')
+      return null
+    }
+    return <Auth mode="register" onAuth={handleAuth} onBack={handleBackToLanding} />
+  }
+
+  // Si hay usuario pero está en "/" redirigir a /editor
+  if (path === '/' && user) {
+    navigate('/editor')
     return null
+  }
+
+  // Editor - requiere autenticación
+  if (path === '/editor') {
+    if (!user) {
+      navigate('/')
+      return null
+    }
+
+    // Si hay usuario pero no hay template, mostrar pantalla de bienvenida dentro del layout
+    if (!hasTemplate) {
+      return (
+        <div className="app">
+          <header className="app-header">
+            <div className="header-left">
+              <div className="logo">
+                <h1>AI Presentation Studio</h1>
+              </div>
+            </div>
+            <div className="header-actions">
+              <button 
+                className="btn-icon theme-toggle-btn"
+                onClick={toggleTheme}
+                title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              >
+                <span className="material-icons">{isDark ? 'light_mode' : 'dark_mode'}</span>
+              </button>
+              <button 
+                className="btn-icon profile-btn"
+                onClick={() => setShowProfile(true)}
+                title="Mi perfil"
+              >
+                <span className="material-icons">person</span>
+              </button>
+            </div>
+          </header>
+          
+          <main className="welcome-main">
+            <div className="welcome-content">
+              <h1>¡Hola{user.name ? `, ${user.name}` : ''}!</h1>
+              <p>Sube tu plantilla y edita con IA en tiempo real</p>
+              <TemplateUploader onUpload={handleTemplateUpload} />
+              
+              <div className="library-divider">
+                <span>o selecciona de tu biblioteca</span>
+              </div>
+              
+              <button 
+                type="button" 
+                className="open-library-btn"
+                onClick={() => setShowTemplateLibrary(true)}
+              >
+                <span className="material-icons">folder_special</span>
+                Abrir Biblioteca de Templates
+              </button>
+              
+              <button 
+                type="button" 
+                className="open-library-btn text-only-btn"
+                onClick={() => setShowTextOnlyMode(true)}
+              >
+                <span className="material-icons">text_fields</span>
+                Modo Solo Texto
+              </button>
+              
+              <button 
+                type="button" 
+                className="tour-btn"
+                onClick={() => setShowOnboarding(true)}
+              >
+                <span className="material-icons">help_outline</span>
+                Ver tutorial
+              </button>
+            </div>
+          </main>
+          
+          {showTemplateLibrary && (
+            <TemplateLibrary
+              currentTemplateFile={templateFile}
+              onSelectTemplate={handleTemplateFromLibrary}
+              onClose={() => setShowTemplateLibrary(false)}
+            />
+          )}
+          
+          {showTextOnlyMode && (
+            <TextOnlyMode
+              onCreateSlides={handleTextOnlySlides}
+              onClose={() => setShowTextOnlyMode(false)}
+            />
+          )}
+          
+          <OnboardingTour 
+            onComplete={() => setShowOnboarding(false)}
+            forceShow={showOnboarding}
+          />
+          
+          <KeyboardShortcutsHelp
+            isOpen={showKeyboardHelp}
+            onClose={() => setShowKeyboardHelp(false)}
+          />
+          
+          {showProfile && (
+            <ProfilePanel
+              isOpen={showProfile}
+              onClose={() => setShowProfile(false)}
+              onSelectTemplate={handleSelectSavedTemplate}
+              onLogout={handleLogout}
+            />
+          )}
+        </div>
+      )
+    }
+
+    // Si hay template, mostrar editor completo
   }
 
   return (
@@ -718,7 +869,6 @@ function AppContent() {
       <header className="app-header">
         <div className="header-left">
           <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Volver al inicio">
-            <span className="material-icons">auto_awesome</span>
             <h1>AI Presentation Studio</h1>
           </div>
           <span className="slide-counter">
@@ -749,10 +899,10 @@ function AppContent() {
 
           {/* Dropdown: IA */}
           <HeaderDropdown
-            icon="auto_awesome"
+            icon="psychology"
             label="Herramientas IA"
             items={[
-              { icon: 'auto_awesome', label: 'Generar variantes', onClick: () => setShowVariantGenerator(true) },
+              { icon: 'shuffle', label: 'Generar variantes', onClick: () => setShowVariantGenerator(true) },
               { icon: 'lightbulb', label: 'Sugerencias de mejora', onClick: () => setShowContentSuggestions(true) }
             ]}
           />
@@ -768,6 +918,13 @@ function AppContent() {
             ]}
           />
 
+          <button 
+            className="btn-icon theme-toggle-btn"
+            onClick={toggleTheme}
+            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            <span className="material-icons">{isDark ? 'light_mode' : 'dark_mode'}</span>
+          </button>
           <button 
             className={`btn-icon ${voiceEnabled ? 'active' : ''}`}
             onClick={() => setVoiceEnabled(!voiceEnabled)} 
@@ -788,6 +945,13 @@ function AppContent() {
             title="Analytics"
           >
             <span className="material-icons">analytics</span>
+          </button>
+          <button 
+            className={`btn-icon ${isCollaborating ? 'active' : ''}`}
+            onClick={() => setIsCollaborating(!isCollaborating)} 
+            title="Colaboración en tiempo real"
+          >
+            <span className="material-icons">groups</span>
           </button>
           <button 
             type="button"
@@ -819,14 +983,19 @@ function AppContent() {
             <span className="material-icons">file_download</span>
             Exportar
           </button>
-          <button 
-            type="button"
-            className="btn-icon profile-btn"
-            onClick={() => setShowProfile(true)}
-            title="Mi perfil"
-          >
-            <span className="material-icons">person</span>
-          </button>
+          
+          {/* User Menu */}
+          {user && (
+            <HeaderDropdown
+              icon="person"
+              label={user.name || 'Usuario'}
+              items={[
+                { icon: 'person', label: 'Mi Perfil', onClick: () => setShowProfile(true) },
+                { icon: 'settings', label: 'Configuración', onClick: () => {} },
+                { icon: 'logout', label: 'Cerrar Sesión', onClick: handleLogout }
+              ]}
+            />
+          )}
         </div>
       </header>
 
@@ -844,29 +1013,54 @@ function AppContent() {
         )}
         
         <div className="main-layout-content">
-          <SlideViewer 
-            slides={slides}
-            currentSlide={currentSlide}
-            onSlideChange={handleNavigateSlide}
-            onSlideUpdate={handleSlideUpdate}
-            extractedAssets={extractedAssets}
-            onSlideReorder={handleSlideReorder}
-            onSlideDuplicate={handleSlideDuplicate}
-            onSlideDelete={handleSlideDelete}
-            onSlideRename={handleSlideRename}
-            onSlideAdd={handleSlideAdd}
-            logActivity={logActivity}
-          />
+          <ResizablePanel
+            defaultWidth={280}
+            minWidth={200}
+            maxWidth={500}
+            position="left"
+            storageKey="slide-thumbnails-width"
+          >
+            <SlideViewer 
+              slides={slides}
+              currentSlide={currentSlide}
+              onSlideChange={handleNavigateSlide}
+              onSlideUpdate={handleSlideUpdate}
+              extractedAssets={extractedAssets}
+              onSlideReorder={handleSlideReorder}
+              onSlideDuplicate={handleSlideDuplicate}
+              onSlideDelete={handleSlideDelete}
+              onSlideRename={handleSlideRename}
+              onSlideAdd={handleSlideAdd}
+              logActivity={logActivity}
+            />
+          </ResizablePanel>
           
-          <ChatPanel 
-            chatHistory={chatHistory}
-            currentSlide={currentSlide}
-            slides={slides}
-            onMessage={handleChatMessage}
-            onSlideUpdate={handleSlideUpdate}
-            onNavigateSlide={handleNavigateSlide}
-            logActivity={logActivity}
-          />
+          <div className="center-panel">
+            <MainSlideViewer
+              slide={slides[currentSlide]}
+              slideIndex={currentSlide}
+              onSlideUpdate={handleSlideUpdate}
+              extractedAssets={extractedAssets}
+            />
+          </div>
+          
+          <ResizablePanel
+            defaultWidth={400}
+            minWidth={300}
+            maxWidth={700}
+            position="right"
+            storageKey="chat-panel-width"
+          >
+            <ChatPanel 
+              chatHistory={chatHistory}
+              currentSlide={currentSlide}
+              slides={slides}
+              onMessage={handleChatMessage}
+              onSlideUpdate={handleSlideUpdate}
+              onNavigateSlide={handleNavigateSlide}
+              logActivity={logActivity}
+            />
+          </ResizablePanel>
         </div>
       </div>
 
@@ -912,7 +1106,13 @@ function AppContent() {
         )}
         
         {showAnalytics && (
-          <Analytics slides={slides} />
+          <Analytics 
+            slides={slides}
+            currentSlide={currentSlide}
+            isOpen={showAnalytics}
+            onClose={() => setShowAnalytics(false)}
+            templateData={currentTemplateData}
+          />
         )}
         
         {showContentImporter && (
@@ -959,6 +1159,7 @@ function AppContent() {
         isOpen={showProfile}
         onClose={() => setShowProfile(false)}
         onSelectTemplate={handleSelectSavedTemplate}
+        onLogout={handleLogout}
       />
 
       {/* Share Modal */}
@@ -995,6 +1196,28 @@ function AppContent() {
           onCreateSlides={handleTextOnlySlides}
           onClose={() => setShowTextOnlyMode(false)}
         />
+      )}
+
+      {/* Collaboration Panel */}
+      {isCollaborating && (
+        <Suspense fallback={<div>Cargando...</div>}>
+          <Collaboration
+            presentationId={currentTemplateData?.fileName || 'default-session'}
+            currentUser={user}
+            slides={slides}
+            onSlideUpdate={(slideIndex, slideData) => {
+              handleSlideUpdate(slides[slideIndex]?.id, slideData, true)
+            }}
+            onUserJoined={(userName) => {
+              logActivity('user_joined', `${userName} se unió a la sesión`)
+            }}
+            onUserLeft={(userName) => {
+              logActivity('user_left', `${userName} salió de la sesión`)
+            }}
+            isOpen={isCollaborating}
+            onClose={() => setIsCollaborating(false)}
+          />
+        </Suspense>
       )}
     </div>
   )

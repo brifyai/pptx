@@ -176,33 +176,148 @@ export async function exportToPDF(slides, templateFile = null) {
 }
 
 // Exportar a Google Slides (abre en nueva pestaña)
-export async function exportToGoogleSlides(slides) {
-  // Primero exportamos a PPTX y luego redirigimos a Google Slides
-  await exportToPowerPoint(slides)
+export async function exportToGoogleSlides(slides, templateFile = null) {
+  console.log('🔵 Exportando a Google Slides...')
   
-  // Abrir Google Slides para importar
-  window.open('https://docs.google.com/presentation/u/0/create', '_blank')
+  // Primero exportamos a PPTX
+  await exportToPowerPoint(slides, templateFile)
   
-  alert('Se ha descargado el archivo PPTX. Puedes importarlo en Google Slides usando Archivo > Importar diapositivas')
+  // Mostrar instrucciones y abrir Google Slides
+  const instructions = `
+📤 Archivo PPTX descargado correctamente.
+
+Para importar a Google Slides:
+1. Se abrirá Google Slides en una nueva pestaña
+2. Ve a Archivo > Importar diapositivas
+3. Selecciona el archivo .pptx descargado
+4. Elige las diapositivas a importar
+
+¿Deseas abrir Google Slides ahora?
+  `.trim()
+  
+  if (confirm(instructions)) {
+    window.open('https://docs.google.com/presentation/u/0/create', '_blank')
+  }
 }
 
-// Exportar a Figma (genera JSON compatible)
+// Exportar a Figma (genera JSON compatible con plugins)
 export async function exportToFigma(slides) {
+  console.log('🎨 Exportando a Figma...')
+  
+  // Crear estructura compatible con plugins de Figma
   const figmaData = {
     name: 'Presentación AI Studio',
-    slides: slides.map((slide, index) => ({
-      name: slide.name || `Slide ${index + 1}`,
-      type: slide.type,
-      content: slide.content,
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    canvas: {
       width: 1920,
       height: 1080
+    },
+    slides: slides.map((slide, index) => ({
+      id: `slide_${index + 1}`,
+      name: slide.name || `Slide ${index + 1}`,
+      type: slide.type,
+      order: index,
+      content: {
+        title: slide.content?.title || slide.content?.heading || '',
+        subtitle: slide.content?.subtitle || '',
+        bullets: slide.content?.bullets || [],
+        body: slide.content?.body || ''
+      },
+      layout: {
+        width: 1920,
+        height: 1080,
+        background: '#ffffff'
+      },
+      elements: generateFigmaElements(slide)
     }))
   }
   
   const blob = new Blob([JSON.stringify(figmaData, null, 2)], { type: 'application/json' })
   downloadBlob(blob, 'presentacion-figma.json')
   
-  alert('Se ha exportado el archivo JSON. Puedes usar plugins de Figma para importar este formato.')
+  // Mostrar instrucciones
+  const instructions = `
+🎨 Archivo JSON exportado correctamente.
+
+Para importar en Figma:
+1. Instala un plugin como "JSON to Figma" o "Content Reel"
+2. Abre Figma y crea un nuevo archivo
+3. Ejecuta el plugin y carga el archivo JSON
+4. El plugin creará los frames con el contenido
+
+Plugins recomendados:
+• JSON to Figma (gratuito)
+• Figma to JSON (bidireccional)
+• Content Reel (para contenido dinámico)
+  `.trim()
+  
+  alert(instructions)
+}
+
+// Generar elementos de Figma a partir del slide
+function generateFigmaElements(slide) {
+  const elements = []
+  
+  // Título
+  if (slide.content?.title || slide.content?.heading) {
+    elements.push({
+      type: 'TEXT',
+      name: 'Title',
+      x: 100,
+      y: slide.type === 'title' ? 400 : 80,
+      width: 1720,
+      height: 100,
+      text: slide.content?.title || slide.content?.heading,
+      style: {
+        fontSize: slide.type === 'title' ? 72 : 48,
+        fontWeight: 'bold',
+        textAlign: slide.type === 'title' ? 'center' : 'left',
+        color: '#1a1a2e'
+      }
+    })
+  }
+  
+  // Subtítulo
+  if (slide.content?.subtitle) {
+    elements.push({
+      type: 'TEXT',
+      name: 'Subtitle',
+      x: 100,
+      y: 520,
+      width: 1720,
+      height: 60,
+      text: slide.content.subtitle,
+      style: {
+        fontSize: 32,
+        fontWeight: 'normal',
+        textAlign: 'center',
+        color: '#4b5563'
+      }
+    })
+  }
+  
+  // Bullets
+  if (slide.content?.bullets && slide.content.bullets.length > 0) {
+    elements.push({
+      type: 'TEXT',
+      name: 'Bullets',
+      x: 100,
+      y: 200,
+      width: 1720,
+      height: 600,
+      text: slide.content.bullets.map(b => `• ${b}`).join('\n'),
+      style: {
+        fontSize: 24,
+        fontWeight: 'normal',
+        textAlign: 'left',
+        color: '#374151',
+        lineHeight: 1.8
+      }
+    })
+  }
+  
+  return elements
 }
 
 // Exportar como imágenes PNG

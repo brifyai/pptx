@@ -51,7 +51,7 @@
 
 .header-title .material-icons {
   font-size: 28px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .header-title h3 {
@@ -92,7 +92,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #e5e7eb;
-  border-top-color: #667eea;
+  border-top-color: #D24726;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -139,13 +139,13 @@
 }
 
 .slide-tab:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .slide-tab.active {
-  border-color: #667eea;
+  border-color: #D24726;
   background: #f0f3ff;
-  color: #667eea;
+  color: #D24726;
 }
 
 .slide-tab .material-icons {
@@ -181,7 +181,7 @@
 }
 
 .view-toggle button.active {
-  background: #667eea;
+  background: #D24726;
   color: white;
 }
 
@@ -246,8 +246,8 @@
 }
 
 .content-area-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  border-color: #D24726;
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.1);
   cursor: pointer;
 }
 
@@ -259,7 +259,7 @@
 }
 
 .area-type-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D24726 0%, #B83D1F 100%);
   color: white;
   padding: 4px 12px;
   border-radius: 12px;
@@ -287,8 +287,8 @@
 
 .area-content-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #D24726;
+  box-shadow: 0 0 0 3px rgba(210, 71, 38, 0.1);
 }
 
 .area-meta {
@@ -374,8 +374,8 @@
 }
 
 .btn-secondary:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #D24726;
+  color: #D24726;
 }
 
 .btn-primary {
@@ -383,7 +383,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D24726 0%, #B83D1F 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -394,7 +394,7 @@
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.4);
 }
 
 .btn-primary .material-icons {

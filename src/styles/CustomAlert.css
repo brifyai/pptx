@@ -108,7 +108,7 @@
   bottom: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #D24726 0%, #B83D1F 100%);
   animation: progress 3s linear forwards;
 }
 
@@ -233,14 +233,14 @@
 }
 
 .alert-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D24726 0%, #B83D1F 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.3);
 }
 
 .alert-btn.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(210, 71, 38, 0.4);
 }
 
 .alert-btn.secondary {
@@ -267,8 +267,8 @@
 
 /* Confirm Dialog */
 .alert-modal.confirm .alert-icon {
-  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
-  color: #667eea;
+  background: linear-gradient(135deg, #D2472620 0%, #B83D1F20 100%);
+  color: #D24726;
 }
 
 /* Responsive */

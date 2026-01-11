@@ -227,7 +227,7 @@
 
 .bbox-renderer__dropdown-option--selected {
   background: #f0f3ff;
-  color: #667eea;
+  color: #D24726;
 }
 
 .bbox-renderer__dropdown-option--selected:hover {
@@ -247,7 +247,7 @@
 
 .bbox-renderer__dropdown-check {
   font-size: 18px;
-  color: #667eea;
+  color: #D24726;
 }
 
 /* Legend - Requirements: 5.3 */
@@ -315,11 +315,11 @@
 /* Focus styles for accessibility */
 .bbox-renderer__box:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 0 0 3px rgba(210, 71, 38, 0.4);
 }
 
 .bbox-renderer__dropdown-option:focus {
   outline: none;
   background: #f3f4f6;
-  box-shadow: inset 0 0 0 2px #667eea;
+  box-shadow: inset 0 0 0 2px #D24726;
 }

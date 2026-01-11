@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import '../styles/ProfilePanel.css'
 
-function ProfilePanel({ isOpen, onClose, onSelectTemplate }) {
+function ProfilePanel({ isOpen, onClose, onSelectTemplate, onLogout }) {
   const [savedTemplates, setSavedTemplates] = useState([])
   const [activeTab, setActiveTab] = useState('profile') // profile, templates, settings
   const [profile, setProfile] = useState({
@@ -116,9 +116,24 @@ function ProfilePanel({ isOpen, onClose, onSelectTemplate }) {
             <h3>{profile.name || 'Mi Perfil'}</h3>
             <p>{profile.email || 'Configura tu información'}</p>
           </div>
-          <button type="button" className="close-btn" onClick={onClose}>
-            <span className="material-icons">close</span>
-          </button>
+          <div className="profile-header-actions">
+            {onLogout && (
+              <button 
+                type="button" 
+                className="logout-header-btn" 
+                onClick={() => {
+                  onClose()
+                  onLogout()
+                }}
+                title="Cerrar sesión"
+              >
+                <span className="material-icons">logout</span>
+              </button>
+            )}
+            <button type="button" className="close-btn" onClick={onClose}>
+              <span className="material-icons">close</span>
+            </button>
+          </div>
         </div>
 
         <div className="profile-tabs">
@@ -420,6 +435,22 @@ function ProfilePanel({ isOpen, onClose, onSelectTemplate }) {
                   </div>
                 </div>
               </div>
+
+              {onLogout && (
+                <div className="setting-group logout-group">
+                  <button
+                    type="button"
+                    className="btn-logout"
+                    onClick={() => {
+                      onClose()
+                      onLogout()
+                    }}
+                  >
+                    <span className="material-icons">logout</span>
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

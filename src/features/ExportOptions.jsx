@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { exportToPowerPoint, exportToPDF } from '../services/exportService'
+import { exportToPowerPoint, exportToPDF, exportToGoogleSlides, exportToFigma } from '../services/exportService'
 import '../styles/ExportOptions.css'
 
 function ExportOptions({ slides, templateFile, isOpen, onClose }) {
@@ -10,7 +10,9 @@ function ExportOptions({ slides, templateFile, isOpen, onClose }) {
 
   const exportFormats = [
     { id: 'pptx', name: 'PowerPoint', icon: 'slideshow', description: 'Archivo .pptx editable' },
-    { id: 'pdf', name: 'PDF', icon: 'picture_as_pdf', description: 'Documento para compartir' }
+    { id: 'pdf', name: 'PDF', icon: 'picture_as_pdf', description: 'Documento para compartir' },
+    { id: 'google', name: 'Google Slides', icon: 'cloud_upload', description: 'Exportar e importar a Google' },
+    { id: 'figma', name: 'Figma', icon: 'design_services', description: 'JSON para plugins de Figma' }
   ]
 
   const handleExport = async () => {
@@ -23,6 +25,12 @@ function ExportOptions({ slides, templateFile, isOpen, onClose }) {
           break
         case 'pdf':
           await exportToPDF(slides, templateFile)
+          break
+        case 'google':
+          await exportToGoogleSlides(slides, templateFile)
+          break
+        case 'figma':
+          await exportToFigma(slides)
           break
       }
       

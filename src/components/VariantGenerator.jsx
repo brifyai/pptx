@@ -76,7 +76,7 @@ function VariantGenerator({ slide, onApplyVariant, onClose }) {
       <div className="variant-generator-modal">
         <div className="variant-header">
           <h3>
-            <span className="material-icons">auto_awesome</span>
+            <span className="material-icons">shuffle</span>
             Generador de Variantes
           </h3>
           <button type="button" className="close-btn" onClick={onClose}>

@@ -167,7 +167,7 @@
 }
 
 .history-filters button.active {
-  background: #667eea;
+  background: #D24726;
   color: #fff;
 }
 
@@ -271,14 +271,14 @@
 }
 
 .card-info h4:hover {
-  color: #667eea;
+  color: #D24726;
 }
 
 .rename-input {
   width: 100%;
   padding: 4px 8px;
   background: #1e1e2e;
-  border: 1px solid #667eea;
+  border: 1px solid #D24726;
   border-radius: 4px;
   color: #fff;
   font-size: 1rem;

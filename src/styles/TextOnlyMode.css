@@ -131,7 +131,7 @@
 
 .text-input-container textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .text-input-container textarea::placeholder {
@@ -182,13 +182,13 @@
 }
 
 .slide-count-selector button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
   color: #fff;
 }
 
 .slide-count-selector button.active {
-  background: #667eea;
-  border-color: #667eea;
+  background: #D24726;
+  border-color: #D24726;
   color: #fff;
 }
 
@@ -276,7 +276,7 @@
 }
 
 .preview-header h4 .material-icons {
-  color: #667eea;
+  color: #D24726;
 }
 
 .back-btn {
@@ -320,7 +320,7 @@
 }
 
 .slide-preview-card:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .slide-preview-card.title {
@@ -333,7 +333,7 @@
   left: 10px;
   width: 24px;
   height: 24px;
-  background: #667eea;
+  background: #D24726;
   border-radius: 6px;
   display: flex;
   align-items: center;

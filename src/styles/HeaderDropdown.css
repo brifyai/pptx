@@ -28,20 +28,20 @@
 }
 
 .dropdown-trigger:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .dropdown-trigger:hover .material-icons {
-  color: #667eea;
+  color: #D24726;
 }
 
 .header-dropdown.open .dropdown-trigger {
-  border-color: #667eea;
+  border-color: #D24726;
   background: #f8f9ff;
 }
 
 .header-dropdown.open .dropdown-trigger .material-icons {
-  color: #667eea;
+  color: #D24726;
 }
 
 .header-dropdown.open .arrow {
@@ -49,8 +49,8 @@
 }
 
 .dropdown-trigger.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: linear-gradient(135deg, #D24726 0%, #B83D1F 100%);
+  border-color: #D24726;
 }
 
 .dropdown-trigger.active .material-icons {
@@ -118,7 +118,7 @@
 }
 
 .dropdown-item:hover .material-icons {
-  color: #667eea;
+  color: #D24726;
 }
 
 .item-label {

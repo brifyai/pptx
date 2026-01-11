@@ -150,7 +150,7 @@ function ChartEditor({ asset, onSave, onClose }) {
             {/* Generación con IA */}
             <div className="config-section ai-section">
               <h4>
-                <span className="material-icons">auto_awesome</span>
+                <span className="material-icons">psychology</span>
                 Generar con IA
               </h4>
               <div className="ai-input-group">

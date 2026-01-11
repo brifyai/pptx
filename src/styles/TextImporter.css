@@ -77,7 +77,7 @@
 }
 
 .input-instructions .material-icons {
-  color: #667eea;
+  color: #D24726;
   font-size: 24px;
 }
 
@@ -107,7 +107,7 @@
 
 .input-step textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .input-step textarea::placeholder {
@@ -143,14 +143,14 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #D24726;
   border: none;
   color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(210, 71, 38, 0.4);
 }
 
 .btn-primary:disabled {
@@ -212,7 +212,7 @@
 .slide-number {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #D24726;
   border-radius: 8px;
   display: flex;
   align-items: center;

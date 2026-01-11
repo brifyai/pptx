@@ -8,7 +8,7 @@ const ContentMapper = lazy(() => import('./ContentMapper'))
 const INTERACTION_MODES = {
   CHAT: { id: 'chat', icon: 'chat', label: 'Chat', description: 'Pregunta lo que quieras', color: '#6b7280' },
   SLIDE: { id: 'slide', icon: 'crop_square', label: 'Esta Lámina', description: 'Editar slide actual', color: '#667eea' },
-  ALL: { id: 'all', icon: 'auto_awesome', label: 'Toda la Presentación', description: 'Generar contenido completo', color: '#8b5cf6' }
+  ALL: { id: 'all', icon: 'layers', label: 'Toda la Presentación', description: 'Generar contenido completo', color: '#8b5cf6' }
 }
 
 function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate, onNavigateSlide, logActivity }) {
@@ -488,7 +488,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
                     {aiStatus === 'thinking' && 'psychology'}
                     {aiStatus === 'searching' && 'search'}
                     {aiStatus === 'analyzing' && 'analytics'}
-                    {aiStatus === 'generating' && 'auto_awesome'}
+                    {aiStatus === 'generating' && 'edit_note'}
                   </span>
                   <span className="status-text">
                     {aiStatus === 'thinking' && 'Pensando...'}
@@ -533,7 +533,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
             Comandos disponibles:
           </div>
           {[
-            { cmd: '/generar', desc: 'Genera presentación completa', icon: 'auto_awesome' },
+            { cmd: '/generar', desc: 'Genera presentación completa', icon: 'edit_note' },
             { cmd: '/mejorar', desc: 'Mejora slide actual', icon: 'auto_fix_high' },
             { cmd: '/buscar', desc: 'Busca información en web', icon: 'search' },
             { cmd: '/ayuda', desc: 'Muestra ayuda', icon: 'help' }
@@ -622,7 +622,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
           style={{ '--mode-color': currentMode.color }}
         >
           <span className="material-icons">
-            {mode === 'all' ? 'auto_awesome' : mode === 'slide' ? 'edit' : 'send'}
+            {mode === 'all' ? 'layers' : mode === 'slide' ? 'edit' : 'send'}
           </span>
         </button>
       </div>

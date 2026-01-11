@@ -1,0 +1,248 @@
+.main-slide-viewer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.no-slide-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  gap: 15px;
+}
+
+.no-slide-message .material-icons {
+  font-size: 80px;
+  color: #ddd;
+}
+
+.no-slide-message p {
+  font-size: 1.2rem;
+}
+
+.slide-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.slide-preview-container {
+  position: relative;
+  /* Calcular el tamaño máximo manteniendo 16:9 */
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  max-height: 100%;
+  background: transparent;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.slide-preview-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.slide-content-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+/* Precision Indicator */
+.precision-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.precision-indicator .material-icons {
+  font-size: 16px;
+}
+
+/* Extracted Assets */
+.extracted-asset-overlay {
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Draggable Assets */
+.draggable-asset {
+  position: absolute;
+  cursor: move;
+  z-index: 10;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s;
+}
+
+.draggable-asset:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.draggable-asset.selected {
+  outline: 2px solid #D24726;
+  outline-offset: 2px;
+  box-shadow: 0 4px 20px rgba(210, 71, 38, 0.25);
+}
+
+/* Asset type specific styles */
+.draggable-asset.asset-type-icon {
+  background: white;
+  padding: 8px;
+}
+
+.draggable-asset.asset-type-shape {
+  background: transparent;
+  box-shadow: none;
+}
+
+.draggable-asset.asset-type-shape:hover {
+  box-shadow: none;
+}
+
+.draggable-asset.asset-type-chart {
+  background: white;
+  padding: 12px;
+  min-width: 300px;
+}
+
+.draggable-asset.asset-type-image {
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+
+.draggable-asset.asset-type-template {
+  background: transparent;
+  box-shadow: none;
+}
+
+.asset-controls {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  display: flex;
+  gap: 6px;
+  background: white;
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.asset-control-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.asset-control-btn .material-icons {
+  font-size: 18px;
+  color: #666;
+}
+
+.asset-control-btn:hover {
+  background: #D24726;
+}
+
+.asset-control-btn:hover .material-icons {
+  color: white;
+}
+
+.asset-control-btn.danger:hover {
+  background: #ef4444;
+}
+
+/* Resize handles */
+.resize-handles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border: 2px solid #D24726;
+  border-radius: 2px;
+  pointer-events: auto;
+}
+
+.resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+.resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+.resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+.asset-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-image img {
+  display: block;
+  border-radius: 4px;
+}
+
+.asset-unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #9ca3af;
+}
+
+.loading-chart {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
+}

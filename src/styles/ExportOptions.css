@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--overlay-bg, rgba(0,0,0,0.5));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,14 +13,15 @@
 }
 
 .export-modal {
-  background: #1e1e2e;
+  background: var(--bg-light);
   border-radius: 16px;
   max-width: 500px;
   width: 90%;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
 }
 
 .export-modal.with-preview {
@@ -32,7 +33,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .export-header h3 {
@@ -40,11 +41,11 @@
   align-items: center;
   gap: 10px;
   margin: 0;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .export-header h3 .material-icons {
-  color: #667eea;
+  color: var(--ppt-orange);
 }
 
 .export-header .header-actions {
@@ -55,7 +56,7 @@
 .export-header button {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -63,13 +64,13 @@
 }
 
 .export-header button:hover {
-  background: #333;
-  color: #fff;
+  background: var(--bg-section);
+  color: var(--text-primary);
 }
 
 .preview-toggle.active {
-  background: #667eea !important;
-  color: #fff !important;
+  background: var(--ppt-orange) !important;
+  color: white !important;
 }
 
 .export-content {
@@ -81,20 +82,21 @@
 /* Preview Panel */
 .preview-panel {
   width: 400px;
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border-light);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #252535;
+  background: var(--bg-section);
 }
 
 .preview-slide {
   position: relative;
   aspect-ratio: 16/9;
-  background: #1a1a2a;
+  background: var(--bg-elevated);
   border-radius: 8px;
   overflow: hidden;
+  border: 1px solid var(--border-light);
 }
 
 .preview-slide img {
@@ -110,7 +112,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .preview-placeholder .material-icons {
@@ -156,9 +158,9 @@
 }
 
 .preview-nav button {
-  background: #333;
-  border: none;
-  color: #fff;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
@@ -166,7 +168,8 @@
 }
 
 .preview-nav button:hover:not(:disabled) {
-  background: #444;
+  border-color: var(--ppt-orange);
+  color: var(--ppt-orange);
 }
 
 .preview-nav button:disabled {
@@ -175,7 +178,7 @@
 }
 
 .preview-nav span {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -189,11 +192,11 @@
 .thumbnail {
   width: 60px;
   height: 34px;
-  background: #333;
+  background: var(--bg-elevated);
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 2px solid var(--border-light);
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -202,11 +205,11 @@
 }
 
 .thumbnail:hover {
-  border-color: #555;
+  border-color: var(--text-muted);
 }
 
 .thumbnail.active {
-  border-color: #667eea;
+  border-color: var(--ppt-orange);
 }
 
 .thumbnail img {
@@ -216,7 +219,7 @@
 }
 
 .thumbnail span {
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
@@ -240,19 +243,26 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #252535;
+  background: var(--bg-section);
   border-radius: 8px;
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 0.9rem;
+  border: 1px solid var(--border-light);
 }
 
 .summary-item .material-icons {
   font-size: 18px;
+  color: var(--ppt-orange);
 }
 
 .summary-item.template-badge {
-  background: rgba(0, 184, 148, 0.1);
-  color: #00b894;
+  background: rgba(33, 115, 70, 0.1);
+  color: var(--ppt-green);
+  border-color: rgba(33, 115, 70, 0.3);
+}
+
+.summary-item.template-badge .material-icons {
+  color: var(--ppt-green);
 }
 
 .export-formats {
@@ -266,49 +276,49 @@
   align-items: center;
   gap: 15px;
   padding: 15px;
-  border: 2px solid #333;
+  border: 2px solid var(--border-light);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  background: #252535;
+  background: var(--bg-section);
 }
 
 .format-option:hover {
-  border-color: #667eea;
-  background: #2a2a3a;
+  border-color: var(--ppt-orange);
+  background: var(--bg-elevated);
 }
 
 .format-option.selected {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  border-color: var(--ppt-orange);
+  background: rgba(210, 71, 38, 0.08);
 }
 
 .format-icon {
   font-size: 2rem;
-  color: #667eea;
+  color: var(--ppt-orange);
 }
 
 .format-info strong {
   display: block;
   margin-bottom: 4px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .format-info p {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .check-icon {
-  color: #00b894;
+  color: var(--ppt-green);
   margin-left: auto;
 }
 
 .export-btn {
   width: 100%;
   padding: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--ppt-orange) 0%, var(--ppt-orange-dark) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -324,7 +334,7 @@
 
 .export-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(210, 71, 38, 0.4);
 }
 
 .export-btn:disabled {

@@ -68,7 +68,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #333;
-  border-top-color: #667eea;
+  border-top-color: #D24726;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px;
@@ -147,7 +147,7 @@
 
 .suggestion-section h4 .material-icons {
   font-size: 20px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .suggestion-list {
@@ -262,7 +262,7 @@
 
 .title-option button {
   padding: 6px 14px;
-  background: #667eea;
+  background: #D24726;
   border: none;
   border-radius: 6px;
   color: #fff;
@@ -330,7 +330,7 @@
 
 .error-section button {
   padding: 10px 24px;
-  background: #667eea;
+  background: #D24726;
   border: none;
   border-radius: 8px;
   color: #fff;

@@ -142,7 +142,7 @@ function ThemeCustomizer({ onThemeChange, isOpen, onClose }) {
   if (!isOpen) return null
 
   const tabs = [
-    { id: 'themes', label: 'Temas', icon: 'auto_awesome' },
+    { id: 'themes', label: 'Temas', icon: 'style' },
     { id: 'colors', label: 'Colores', icon: 'palette' },
     { id: 'fonts', label: 'Fuentes', icon: 'text_fields' },
     { id: 'layout', label: 'Diseño', icon: 'dashboard' }

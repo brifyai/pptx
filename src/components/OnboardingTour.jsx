@@ -8,7 +8,7 @@ const tourSteps = [
     id: 'welcome',
     title: '¡Bienvenido a AI Presentation Studio!',
     description: 'Te guiaremos paso a paso para crear presentaciones profesionales con tu template corporativo.',
-    icon: 'auto_awesome',
+    icon: 'waving_hand',
     position: 'center'
   },
   {

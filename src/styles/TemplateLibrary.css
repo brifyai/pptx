@@ -73,7 +73,7 @@
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #D24726, #B83D1F);
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -84,7 +84,7 @@
 
 .save-current-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(210, 71, 38, 0.4);
 }
 
 .save-form {
@@ -104,7 +104,7 @@
 
 .save-form input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .save-form-actions {
@@ -133,7 +133,7 @@
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #D24726, #B83D1F);
   border: none;
   color: #fff;
 }

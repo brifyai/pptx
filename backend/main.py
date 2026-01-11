@@ -1486,6 +1486,7 @@ async def update_presentation_permissions(
 async def websocket_endpoint(websocket: WebSocket, presentation_id: str):
     """
     WebSocket para colaboración en tiempo real
+    Soporta: slide_update, cursor_move, user_joined, chat_message
     """
     await manager.connect(websocket, presentation_id)
     
@@ -1516,13 +1517,30 @@ async def websocket_endpoint(websocket: WebSocket, presentation_id: str):
                 await manager.broadcast(presentation_id, {
                     "type": "cursor_moved",
                     "user": user,
-                    "position": data.get('position')
+                    "position": data.get('position'),
+                    "color": data.get('color')
                 }, exclude=websocket)
             
             elif message_type == 'user_joined':
                 # Notificar que usuario se unió
                 await manager.broadcast(presentation_id, {
                     "type": "user_joined",
+                    "user": user
+                }, exclude=websocket)
+            
+            elif message_type == 'chat_message':
+                # Broadcast mensaje de chat
+                await manager.broadcast(presentation_id, {
+                    "type": "chat_message",
+                    "user": user,
+                    "message": data.get('message'),
+                    "timestamp": data.get('timestamp')
+                }, exclude=websocket)
+            
+            elif message_type == 'typing':
+                # Indicador de que alguien está escribiendo
+                await manager.broadcast(presentation_id, {
+                    "type": "typing",
                     "user": user
                 }, exclude=websocket)
     

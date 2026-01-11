@@ -51,7 +51,7 @@
 
 .config-section h4 .material-icons {
   font-size: 18px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .config-section input[type="text"] {
@@ -65,12 +65,12 @@
 
 .config-section input[type="text"]:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 /* AI Section */
 .ai-section {
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, #D2472615 0%, #B83D1F15 100%);
   padding: 16px;
   border-radius: 12px;
   margin: -20px -20px 24px -20px;
@@ -90,7 +90,7 @@
 .ai-btn {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D24726 0%, #B83D1F 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -127,8 +127,8 @@
 }
 
 .random-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #D24726;
+  color: #D24726;
   cursor: pointer;
 }
 
@@ -163,12 +163,12 @@
 }
 
 .chart-type-grid button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .chart-type-grid button.active {
-  background: #667eea;
-  border-color: #667eea;
+  background: #D24726;
+  border-color: #D24726;
   color: white;
 }
 
@@ -201,11 +201,11 @@
 }
 
 .color-scheme:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .color-scheme.active {
-  border-color: #667eea;
+  border-color: #D24726;
   background: #f0f3ff;
 }
 
@@ -239,7 +239,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #D24726;
 }
 
 .checkbox-label span {
@@ -272,7 +272,7 @@
   cursor: pointer;
   gap: 4px;
   padding: 6px 12px;
-  background: #667eea;
+  background: #D24726;
   color: white;
   border: none;
   border-radius: 6px;
@@ -328,7 +328,7 @@
 
 .table-row input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .table-row input[type="number"] {

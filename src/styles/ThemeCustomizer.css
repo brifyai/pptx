@@ -46,7 +46,7 @@
 
 .header-title .material-icons {
   font-size: 28px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .header-title h3 {
@@ -101,7 +101,7 @@
 
 .customizer-tabs button.active {
   background: white;
-  color: #667eea;
+  color: #D24726;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -164,13 +164,13 @@
 }
 
 .mode-toggle button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .mode-toggle button.active {
-  border-color: #667eea;
-  background: #f0f3ff;
-  color: #667eea;
+  border-color: #D24726;
+  background: rgba(210, 71, 38, 0.05);
+  color: #D24726;
 }
 
 /* Preset Grid */
@@ -189,14 +189,14 @@
 }
 
 .preset-card:hover {
-  border-color: #667eea;
+  border-color: #D24726;
   transform: translateY(-2px);
   cursor: pointer;
 }
 
 .preset-card.active {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  border-color: #D24726;
+  box-shadow: 0 0 0 3px rgba(210, 71, 38, 0.2);
 }
 
 .preset-preview {
@@ -373,18 +373,18 @@
 }
 
 .font-list button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .font-list button.active {
-  border-color: #667eea;
-  background: #f0f3ff;
+  border-color: #D24726;
+  background: rgba(210, 71, 38, 0.05);
 }
 
 .font-preview {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #667eea;
+  color: #D24726;
 }
 
 .font-name {
@@ -426,12 +426,12 @@
 }
 
 .size-options button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .size-options button.active {
-  border-color: #667eea;
-  background: #f0f3ff;
+  border-color: #D24726;
+  background: rgba(210, 71, 38, 0.05);
 }
 
 .size-options button span:first-child {
@@ -476,7 +476,7 @@
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: #667eea;
+  background: #D24726;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -495,7 +495,7 @@
 .border-preview div {
   display: inline-block;
   padding: 12px 24px;
-  background: #667eea;
+  background: #D24726;
   color: white;
   font-size: 0.9rem;
 }
@@ -521,17 +521,17 @@
 }
 
 .spacing-options button:hover {
-  border-color: #667eea;
+  border-color: #D24726;
 }
 
 .spacing-options button.active {
-  border-color: #667eea;
-  background: #f0f3ff;
+  border-color: #D24726;
+  background: rgba(210, 71, 38, 0.05);
 }
 
 .spacing-options button .material-icons {
   font-size: 28px;
-  color: #667eea;
+  color: #D24726;
 }
 
 .spacing-options button span:last-child {
@@ -574,7 +574,7 @@
   cursor: pointer;
   gap: 8px;
   padding: 10px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #D24726;
   color: white;
   border: none;
   border-radius: 8px;
@@ -586,5 +586,5 @@
 
 .btn-apply:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(210, 71, 38, 0.4);
 }
