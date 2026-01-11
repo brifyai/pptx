@@ -22,6 +22,8 @@ import Auth from './components/Auth'
 import MobileHeader from './components/MobileHeader'
 import MobileTabBar from './components/MobileTabBar'
 import MobileMenu from './components/MobileMenu'
+import MobileCreateModal from './components/MobileCreateModal'
+import MobileSlideOptions from './components/MobileSlideOptions'
 import { AlertProvider, useAlert } from './components/CustomAlert'
 import { getChutesConfig } from './services/chutesService'
 import { Router, Route, useRouter } from './SimpleRouter'
@@ -62,6 +64,9 @@ function AppContent() {
   // Estados mobile
   const [mobileTab, setMobileTab] = useState('home')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showSlideOptions, setShowSlideOptions] = useState(false)
+  const [selectedSlide, setSelectedSlide] = useState(null)
   
   const [hasTemplate, setHasTemplate] = useState(false)
   const [slides, setSlides] = useState([])
@@ -1270,10 +1275,92 @@ function AppContent() {
               setShowMobileMenu(true)
             }
           }}
-          onCreateClick={() => {
-            // Abrir modal de creación
-            setShowTemplateLibrary(true)
+          onCreateClick={() => setShowCreateModal(true)}
+        />
+      )}
+
+      {/* Mobile Create Modal - Solo visible en mobile */}
+      {isMobile && (
+        <MobileCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSelectOption={(action) => {
+            setShowCreateModal(false)
+            switch(action) {
+              case 'upload':
+                // Trigger file input click
+                document.querySelector('input[type="file"]')?.click()
+                break
+              case 'blank':
+                // Crear presentación vacía
+                handleSlideAdd()
+                showToast('Nueva presentación creada')
+                break
+              case 'library':
+                setShowTemplateLibrary(true)
+                break
+              case 'text':
+                setShowTextImporter(true)
+                break
+            }
           }}
+        />
+      )}
+
+      {/* Mobile Slide Options - Solo visible en mobile */}
+      {isMobile && selectedSlide && (
+        <MobileSlideOptions
+          isOpen={showSlideOptions}
+          onClose={() => {
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          slide={selectedSlide}
+          onDuplicate={() => {
+            const slideIndex = slides.findIndex(s => s.id === selectedSlide.id)
+            if (slideIndex !== -1) {
+              handleSlideDuplicate(slideIndex)
+            }
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          onDelete={() => {
+            const slideIndex = slides.findIndex(s => s.id === selectedSlide.id)
+            if (slideIndex !== -1) {
+              handleSlideDelete(slideIndex)
+            }
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          onRename={() => {
+            const slideIndex = slides.findIndex(s => s.id === selectedSlide.id)
+            if (slideIndex !== -1) {
+              const newName = prompt('Nuevo nombre:', selectedSlide.name || `Lámina ${slideIndex + 1}`)
+              if (newName) {
+                handleSlideRename(selectedSlide.id, newName)
+              }
+            }
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          onMoveUp={() => {
+            const slideIndex = slides.findIndex(s => s.id === selectedSlide.id)
+            if (slideIndex > 0) {
+              handleSlideReorder(slideIndex, slideIndex - 1)
+            }
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          onMoveDown={() => {
+            const slideIndex = slides.findIndex(s => s.id === selectedSlide.id)
+            if (slideIndex < slides.length - 1) {
+              handleSlideReorder(slideIndex, slideIndex + 1)
+            }
+            setShowSlideOptions(false)
+            setSelectedSlide(null)
+          }}
+          canMoveUp={slides.findIndex(s => s.id === selectedSlide.id) > 0}
+          canMoveDown={slides.findIndex(s => s.id === selectedSlide.id) < slides.length - 1}
         />
       )}
     </div>

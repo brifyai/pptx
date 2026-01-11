@@ -1,0 +1,193 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE CREATE MODAL - FAB Options
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-create-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Options Grid */
+.create-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.create-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-section);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.create-option:active {
+  transform: scale(0.98);
+}
+
+/* Color variants */
+.create-option.orange {
+  border-color: rgba(210, 71, 38, 0.3);
+  background: rgba(210, 71, 38, 0.05);
+}
+
+.create-option.orange:active {
+  background: rgba(210, 71, 38, 0.1);
+}
+
+.create-option.blue {
+  border-color: rgba(43, 87, 154, 0.3);
+  background: rgba(43, 87, 154, 0.05);
+}
+
+.create-option.blue:active {
+  background: rgba(43, 87, 154, 0.1);
+}
+
+.create-option.purple {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.create-option.purple:active {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.create-option.green {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.create-option.green:active {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* Icon Wrapper */
+.option-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.create-option.orange .option-icon-wrapper {
+  background: var(--ppt-orange);
+}
+
+.create-option.blue .option-icon-wrapper {
+  background: var(--accent-blue);
+}
+
+.create-option.purple .option-icon-wrapper {
+  background: #8b5cf6;
+}
+
+.create-option.green .option-icon-wrapper {
+  background: #22c55e;
+}
+
+.option-icon-wrapper .material-icons {
+  font-size: 28px;
+  color: white;
+}
+
+/* Content */
+.option-content {
+  flex: 1;
+}
+
+.option-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.option-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Hint */
+.create-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(210, 71, 38, 0.08);
+  border: 1px solid rgba(210, 71, 38, 0.2);
+  border-radius: 12px;
+}
+
+.create-hint .material-icons {
+  font-size: 20px;
+  color: var(--ppt-orange);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.create-hint p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Dark theme */
+.dark-theme .create-option {
+  background: var(--bg-section);
+  border-color: var(--border-light);
+}
+
+.dark-theme .create-option.orange {
+  border-color: rgba(210, 71, 38, 0.3);
+  background: rgba(210, 71, 38, 0.1);
+}
+
+.dark-theme .create-option.orange:active {
+  background: rgba(210, 71, 38, 0.15);
+}
+
+.dark-theme .create-option.blue {
+  border-color: rgba(43, 87, 154, 0.3);
+  background: rgba(43, 87, 154, 0.1);
+}
+
+.dark-theme .create-option.blue:active {
+  background: rgba(43, 87, 154, 0.15);
+}
+
+.dark-theme .create-option.purple {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.dark-theme .create-option.purple:active {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.dark-theme .create-option.green {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.dark-theme .create-option.green:active {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.dark-theme .create-hint {
+  background: rgba(210, 71, 38, 0.12);
+  border-color: rgba(210, 71, 38, 0.25);
+}
