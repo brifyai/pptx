@@ -736,6 +736,22 @@ function AppContent() {
   }
 
   // Routing basado en path
+  // Redirecciones automáticas con useEffect para evitar warnings
+  useEffect(() => {
+    // Si está en login/registro pero ya tiene usuario, redirigir a editor
+    if ((path === '/acceso' || path === '/registro') && user) {
+      navigate('/editor')
+    }
+    // Si está en home pero tiene usuario, redirigir a editor
+    else if (path === '/' && user) {
+      navigate('/editor')
+    }
+    // Si está en editor pero no tiene usuario, redirigir a home
+    else if (path === '/editor' && !user) {
+      navigate('/')
+    }
+  }, [path, user, navigate])
+
   // Landing (home) - solo si no hay usuario
   if (path === '/' && !user) {
     return (
@@ -748,8 +764,7 @@ function AppContent() {
   // Login
   if (path === '/acceso') {
     if (user) {
-      navigate('/editor')
-      return null
+      return null // useEffect manejará la redirección
     }
     return (
       <PageTransition type="slide" duration={300} isActive={true}>
@@ -761,8 +776,7 @@ function AppContent() {
   // Registro
   if (path === '/registro') {
     if (user) {
-      navigate('/editor')
-      return null
+      return null // useEffect manejará la redirección
     }
     return (
       <PageTransition type="slide" duration={300} isActive={true}>
@@ -773,15 +787,13 @@ function AppContent() {
 
   // Si hay usuario pero está en "/" redirigir a /editor
   if (path === '/' && user) {
-    navigate('/editor')
-    return null
+    return null // useEffect manejará la redirección
   }
 
   // Editor - requiere autenticación
   if (path === '/editor') {
     if (!user) {
-      navigate('/')
-      return null
+      return null // useEffect manejará la redirección
     }
 
     // Si hay usuario pero no hay template, mostrar pantalla de bienvenida dentro del layout
