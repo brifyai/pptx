@@ -19,12 +19,16 @@ import FontWarning from './components/FontWarning'
 import ResizablePanel from './components/ResizablePanel'
 import Landing from './components/Landing'
 import Auth from './components/Auth'
+import MobileHeader from './components/MobileHeader'
+import MobileTabBar from './components/MobileTabBar'
+import MobileMenu from './components/MobileMenu'
 import { AlertProvider, useAlert } from './components/CustomAlert'
 import { getChutesConfig } from './services/chutesService'
 import { Router, Route, useRouter } from './SimpleRouter'
 import collaborationService from './services/collaborationService'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useTheme } from './hooks/useTheme'
+import { useMobile } from './hooks/useMobile'
 
 // Lazy load de features avanzadas (solo se cargan cuando se usan)
 const VoiceCommands = lazy(() => import('./features/VoiceCommands'))
@@ -50,9 +54,14 @@ function AppContent() {
   const { showToast, showWarning, showDeleteConfirm } = useAlert()
   const { path, navigate } = useRouter()
   const { theme, isDark, toggleTheme } = useTheme()
+  const isMobile = useMobile(768)
   
   // Estado de autenticación
   const [user, setUser] = useState(null)
+  
+  // Estados mobile
+  const [mobileTab, setMobileTab] = useState('home')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   
   const [hasTemplate, setHasTemplate] = useState(false)
   const [slides, setSlides] = useState([])
@@ -866,6 +875,30 @@ function AppContent() {
 
   return (
     <div className="app">
+      {/* Mobile Header - Solo visible en mobile */}
+      {isMobile && (
+        <MobileHeader 
+          title={hasTemplate ? `Slide ${currentSlide + 1}/${slides.length}` : 'Slide AI'}
+          onMenuClick={() => setShowMobileMenu(true)}
+          onProfileClick={() => setShowProfile(true)}
+          showBack={path === '/editor' && hasTemplate}
+          onBackClick={() => navigate('/')}
+          actions={hasTemplate ? [
+            { icon: 'chat', label: 'Chat', onClick: () => setMobileTab('chat') }
+          ] : []}
+        />
+      )}
+
+      {/* Mobile Menu - Hamburger Drawer */}
+      {isMobile && (
+        <MobileMenu 
+          isOpen={showMobileMenu}
+          onClose={() => setShowMobileMenu(false)}
+          user={user}
+          onLogout={handleLogout}
+        />
+      )}
+
       <header className="app-header">
         <div className="header-left">
           <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Volver al inicio">
@@ -1218,6 +1251,30 @@ function AppContent() {
             onClose={() => setIsCollaborating(false)}
           />
         </Suspense>
+      )}
+
+      {/* Mobile Tab Bar - Solo visible en mobile */}
+      {isMobile && hasTemplate && (
+        <MobileTabBar 
+          activeTab={mobileTab}
+          onTabChange={(tab) => {
+            setMobileTab(tab)
+            // Manejar navegación según el tab
+            if (tab === 'home') {
+              navigate('/')
+            } else if (tab === 'slides') {
+              // Mostrar grid de slides
+              console.log('Navegar a slides')
+            } else if (tab === 'more') {
+              // Abrir menú de opciones
+              setShowMobileMenu(true)
+            }
+          }}
+          onCreateClick={() => {
+            // Abrir modal de creación
+            setShowTemplateLibrary(true)
+          }}
+        />
       )}
     </div>
   )
