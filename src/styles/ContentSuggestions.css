@@ -1,0 +1,342 @@
+.suggestions-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.suggestions-modal {
+  background: #1e1e2e;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #333;
+}
+
+.suggestions-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.suggestions-header h3 .material-icons {
+  color: #feca57;
+}
+
+.suggestions-header .close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.suggestions-header .close-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Loading */
+.loading-section {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.loading-section .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-section p {
+  color: #888;
+  margin: 0;
+}
+
+/* Content */
+.suggestions-content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Score section */
+.score-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #252535;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.score-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 4px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.score-summary {
+  color: #aaa;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Suggestion sections */
+.suggestion-section {
+  margin-bottom: 24px;
+}
+
+.suggestion-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  margin: 0 0 12px 0;
+}
+
+.suggestion-section h4 .material-icons {
+  font-size: 20px;
+  color: #667eea;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: #252535;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.suggestion-item.applied {
+  opacity: 0.6;
+  background: rgba(0, 184, 148, 0.1);
+}
+
+.issue-content {
+  flex: 1;
+}
+
+.issue-content p {
+  margin: 0 0 6px 0;
+  font-size: 0.9rem;
+}
+
+.issue-content p:last-child {
+  margin-bottom: 0;
+}
+
+.issue-content .label {
+  color: #666;
+  font-size: 0.8rem;
+  margin-right: 6px;
+}
+
+.issue-content .original {
+  color: #aaa;
+}
+
+.issue-content .strikethrough {
+  text-decoration: line-through;
+  color: #ff6b6b;
+}
+
+.issue-content .suggestion {
+  color: #ddd;
+}
+
+.issue-content .highlight {
+  color: #00b894;
+  font-weight: 500;
+}
+
+.issue-content .reason {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.suggestion-item button {
+  padding: 8px;
+  background: #333;
+  border: none;
+  border-radius: 8px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.suggestion-item button:hover:not(:disabled) {
+  background: #00b894;
+  color: #fff;
+}
+
+.suggestion-item button:disabled {
+  cursor: default;
+  background: #00b894;
+  color: #fff;
+}
+
+/* Title suggestions */
+.title-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #252535;
+  border-radius: 10px;
+}
+
+.title-option p {
+  margin: 0;
+  color: #ddd;
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+.title-option button {
+  padding: 6px 14px;
+  background: #667eea;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.title-option button:hover {
+  background: #5a6fd6;
+}
+
+/* Tips section */
+.tips-section .tips-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tips-list li {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Refresh button */
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #333;
+  border: none;
+  border-radius: 10px;
+  color: #aaa;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #444;
+  color: #fff;
+}
+
+/* Error section */
+.error-section {
+  padding: 40px;
+  text-align: center;
+}
+
+.error-section .material-icons {
+  font-size: 48px;
+  color: #ff6b6b;
+  margin-bottom: 16px;
+}
+
+.error-section p {
+  color: #888;
+  margin: 0 0 20px 0;
+}
+
+.error-section button {
+  padding: 10px 24px;
+  background: #667eea;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.error-section button:hover {
+  background: #5a6fd6;
+}

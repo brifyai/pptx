@@ -1,0 +1,39 @@
+.collaboration-panel {
+  position: fixed;
+  top: 70px;
+  right: 25%;
+  background: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 50;
+}
+
+.active-users {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-avatars {
+  display: flex;
+  gap: -8px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 2px solid white;
+  margin-left: -8px;
+}
+
+.user-avatar:first-child {
+  margin-left: 0;
+}

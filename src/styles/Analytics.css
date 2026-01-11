@@ -1,0 +1,48 @@
+.analytics-panel {
+  position: fixed;
+  bottom: 20px;
+  right: calc(25% + 20px);
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  width: 300px;
+  z-index: 50;
+}
+
+.analytics-panel h4 {
+  margin-bottom: 15px;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.insights {
+  margin-top: 15px;
+}
+
+.insights h5 {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.insight {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.insight.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.insight.suggestion {
+  background: #dbeafe;
+  color: #1e40af;
+}

@@ -1,0 +1,4 @@
+# file: C:\Users\admin\Desktop\IA_PPTX\marketing-ai-app\backend\shape_matcher.py
+# hypothesis_version: 6.150.0
+
+[0.1, 1000, 'BODY', 'CHART_AREA', 'FOOTER', 'IMAGE_HOLDER', 'SUBTITLE', 'TITLE', 'UNKNOWN']

@@ -1,0 +1,228 @@
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.onboarding-modal {
+  background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress dots */
+.onboarding-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #444;
+  transition: all 0.3s;
+}
+
+.progress-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.progress-dot.completed {
+  background: #00b894;
+}
+
+/* Content */
+.onboarding-content {
+  margin-bottom: 30px;
+}
+
+.step-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.step-icon .material-icons {
+  font-size: 40px;
+  color: #fff;
+}
+
+.onboarding-content h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0 0 16px 0;
+  font-weight: 600;
+}
+
+.onboarding-content p {
+  color: #aaa;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Feature highlights */
+.feature-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ddd;
+  font-size: 0.95rem;
+}
+
+.feature .material-icons {
+  color: #00b894;
+  font-size: 20px;
+}
+
+/* Actions */
+.onboarding-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.onboarding-actions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-prev {
+  background: #333;
+  border: none;
+  color: #aaa;
+}
+
+.btn-prev:hover {
+  background: #444;
+  color: #fff;
+}
+
+.btn-skip {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+}
+
+.btn-skip:hover {
+  border-color: #666;
+  color: #aaa;
+}
+
+.btn-next {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  color: #fff;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Step counter */
+.step-counter {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  color: #555;
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .onboarding-modal {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+
+  .step-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .step-icon .material-icons {
+    font-size: 30px;
+  }
+
+  .onboarding-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .onboarding-actions {
+    flex-direction: column;
+  }
+
+  .onboarding-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

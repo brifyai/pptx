@@ -1,0 +1,32 @@
+{
+  "name": "ai-presentation-app",
+  "version": "1.0.0",
+  "description": "App para generar presentaciones con IA respetando diseños personalizados",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "openai": "^4.20.0",
+    "pptxgenjs": "^3.12.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.2.0",
+    "react-draggable": "^4.5.0",
+    "react-router-dom": "^7.12.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "fast-check": "^4.5.3",
+    "vite": "^5.0.0",
+    "vitest": "^4.0.16"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node check-integration.js",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:integration": "bash test-integration.sh || test-integration.bat"
+  }
+}

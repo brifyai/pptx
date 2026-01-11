@@ -1,0 +1,325 @@
+/**
+ * BoundingBoxRenderer Styles
+ * 
+ * Styles for the bounding box visualization component that displays
+ * detected content areas over template images.
+ * 
+ * Requirements: 5.1, 5.2, 5.3, 5.4, 5.5
+ */
+
+/* Container */
+.bbox-renderer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.bbox-renderer--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #9ca3af;
+}
+
+.bbox-renderer--empty .material-icons {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.bbox-renderer--empty p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Template Image */
+.bbox-renderer__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Bounding Box - Requirements: 5.1 */
+.bbox-renderer__box {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.bbox-renderer__box--editable {
+  cursor: pointer;
+}
+
+.bbox-renderer__box--hovered {
+  border-width: 3px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bbox-renderer__box--active {
+  border-width: 3px;
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Type Label - Requirements: 5.2 */
+.bbox-renderer__label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px 0 4px 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.bbox-renderer__label-text {
+  display: inline-block;
+}
+
+.bbox-renderer__label-shape {
+  opacity: 0.8;
+  font-size: 0.65rem;
+  font-weight: 400;
+}
+
+/* Hover Tooltip - Requirements: 5.4 */
+.bbox-renderer__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(31, 41, 55, 0.95);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  min-width: 160px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+.bbox-renderer__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(31, 41, 55, 0.95);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.bbox-renderer__tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.bbox-renderer__tooltip-label {
+  color: #9ca3af;
+}
+
+.bbox-renderer__tooltip-value {
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.bbox-renderer__tooltip-hint {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Type Change Dropdown - Requirements: 5.5 */
+.bbox-renderer__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.bbox-renderer__dropdown-header {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bbox-renderer__dropdown-options {
+  padding: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.bbox-renderer__dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.bbox-renderer__dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.bbox-renderer__dropdown-option--selected {
+  background: #f0f3ff;
+  color: #667eea;
+}
+
+.bbox-renderer__dropdown-option--selected:hover {
+  background: #e8ecff;
+}
+
+.bbox-renderer__dropdown-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.bbox-renderer__dropdown-name {
+  flex: 1;
+}
+
+.bbox-renderer__dropdown-check {
+  font-size: 18px;
+  color: #667eea;
+}
+
+/* Legend - Requirements: 5.3 */
+.bbox-renderer__legend {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+}
+
+.bbox-renderer__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: #4b5563;
+}
+
+.bbox-renderer__legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.bbox-renderer__legend-name {
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bbox-renderer__legend {
+    bottom: 8px;
+    right: 8px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .bbox-renderer__legend-item {
+    font-size: 0.65rem;
+  }
+
+  .bbox-renderer__label {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+
+  .bbox-renderer__tooltip {
+    min-width: 140px;
+    font-size: 0.7rem;
+  }
+
+  .bbox-renderer__dropdown {
+    min-width: 180px;
+  }
+}
+
+/* Focus styles for accessibility */
+.bbox-renderer__box:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+}
+
+.bbox-renderer__dropdown-option:focus {
+  outline: none;
+  background: #f3f4f6;
+  box-shadow: inset 0 0 0 2px #667eea;
+}

@@ -1,0 +1,418 @@
+.font-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+  transition: all 0.3s ease;
+}
+
+.font-warning.expanded {
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+}
+
+.font-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.font-warning-header:hover {
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.font-warning-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #ffc107;
+  border-radius: 50%;
+  color: #856404;
+}
+
+.font-warning-icon .material-icons {
+  font-size: 20px;
+}
+
+.font-warning-summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.font-warning-summary strong {
+  color: #856404;
+  font-size: 14px;
+}
+
+.font-warning-summary span {
+  color: #856404;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.font-warning-toggle,
+.font-warning-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #856404;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.font-warning-toggle:hover,
+.font-warning-close:hover {
+  background: rgba(133, 100, 4, 0.1);
+}
+
+.font-warning-content {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.font-section {
+  margin-top: 16px;
+}
+
+.font-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #856404;
+  font-weight: 600;
+}
+
+.font-section h4 .material-icons {
+  font-size: 18px;
+}
+
+.font-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.font-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+  font-size: 13px;
+}
+
+.font-list li:last-child {
+  border-bottom: none;
+}
+
+.font-list.missing li {
+  background: rgba(220, 53, 69, 0.05);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.font-list.available li {
+  background: rgba(40, 167, 69, 0.05);
+}
+
+.font-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.font-proprietary-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #6c757d;
+  color: white;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.font-alternative {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #28a745;
+}
+
+.alternative-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #155724;
+}
+
+.alternative-label .material-icons {
+  font-size: 16px;
+}
+
+.direct-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.direct-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.direct-download-btn .material-icons {
+  font-size: 18px;
+}
+
+.font-direct-download {
+  width: 100%;
+}
+
+.search-label {
+  font-size: 11px;
+  color: #666;
+  margin-right: 4px;
+}
+
+.font-download-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.download-btn.google {
+  background: #4285f4;
+  color: white;
+}
+
+.download-btn.google:hover {
+  background: #3367d6;
+}
+
+.download-btn.dafont {
+  background: #e74c3c;
+  color: white;
+}
+
+.download-btn.dafont:hover {
+  background: #c0392b;
+}
+
+.download-btn.fontsquirrel {
+  background: #2ecc71;
+  color: white;
+}
+
+.download-btn.fontsquirrel:hover {
+  background: #27ae60;
+}
+
+.download-btn.fonts1001 {
+  background: #9b59b6;
+  color: white;
+}
+
+.download-btn.fonts1001:hover {
+  background: #8e44ad;
+}
+
+.font-name {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.font-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #dc3545;
+  color: white;
+  border-radius: 10px;
+}
+
+.font-original {
+  color: #666;
+  font-style: italic;
+}
+
+.font-arrow {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.font-google {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.font-download-link {
+  display: flex;
+  align-items: center;
+  color: #007bff;
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.font-download-link:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.font-download-link .material-icons {
+  font-size: 16px;
+}
+
+.font-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #856404;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.font-note .material-icons {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.load-fonts-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-fonts-btn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.load-fonts-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.load-fonts-btn .material-icons {
+  font-size: 18px;
+}
+
+.load-fonts-btn .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.fonts-loaded-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.font-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-item .material-icons {
+  font-size: 16px;
+  color: #28a745;
+}
+
+.summary-item.warning .material-icons {
+  color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .font-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .font-list li {
+    flex-wrap: wrap;
+  }
+}
