@@ -1,4 +1,4 @@
-# Mejoras de Diferenciación - AI Presentation Studio
+# Mejoras de Diferenciación - Slide AI
 
 ## Resumen
 Se implementaron 3 funcionalidades que diferencian la app de otras herramientas de presentaciones.

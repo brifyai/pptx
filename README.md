@@ -1,4 +1,4 @@
-# 🎨 AI Presentation Studio
+# 🎨 Slide AI
 
 App profesional que permite subir plantillas de PowerPoint personalizadas y generar contenido con IA **manteniendo el diseño original al 100%**.
 

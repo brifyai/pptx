@@ -1,4 +1,4 @@
-# 🏗️ Arquitectura del Sistema - AI Presentation Studio
+# 🏗️ Arquitectura del Sistema - Slide AI
 
 ## 📊 Diagrama de Arquitectura General
 

@@ -1,4 +1,4 @@
-# 🎨 AI Presentation Studio
+# 🎨 Slide AI
 
 **Aplicación profesional para generar presentaciones PowerPoint con IA manteniendo tu diseño original al 100%**
 

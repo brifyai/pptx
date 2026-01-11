@@ -6,7 +6,7 @@ const ONBOARDING_KEY = 'ai_presentation_onboarding_completed'
 const tourSteps = [
   {
     id: 'welcome',
-    title: '¡Bienvenido a AI Presentation Studio!',
+    title: '¡Bienvenido a Slide AI!',
     description: 'Te guiaremos paso a paso para crear presentaciones profesionales con tu template corporativo.',
     icon: 'waving_hand',
     position: 'center'

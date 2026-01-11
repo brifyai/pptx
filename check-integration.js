@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-console.log('🔍 Verificando integración de AI Presentation Studio...\n')
+console.log('🔍 Verificando integración de Slide AI...\n')
 
 let errors = 0
 let warnings = 0

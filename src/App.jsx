@@ -764,7 +764,7 @@ function AppContent() {
           <header className="app-header">
             <div className="header-left">
               <div className="logo">
-                <h1>AI Presentation Studio</h1>
+                <h1>Slide AI</h1>
               </div>
             </div>
             <div className="header-actions">
@@ -869,7 +869,7 @@ function AppContent() {
       <header className="app-header">
         <div className="header-left">
           <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Volver al inicio">
-            <h1>AI Presentation Studio</h1>
+            <h1>Slide AI</h1>
           </div>
           <span className="slide-counter">
             <span className="material-icons">slideshow</span>

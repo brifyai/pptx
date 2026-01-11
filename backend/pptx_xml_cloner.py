@@ -8,7 +8,7 @@ Este módulo manipula directamente el XML dentro del archivo PPTX para:
 - Preservar efectos 3D
 - Solo reemplazar el texto editable
 
-Autor: AI Presentation Studio
+Autor: Slide AI
 Fecha: Enero 2026
 """
 

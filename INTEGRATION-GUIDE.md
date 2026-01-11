@@ -2,7 +2,7 @@
 
 ## 📋 Resumen del Sistema
 
-**AI Presentation Studio** es una aplicación completa para generar presentaciones PowerPoint con IA, manteniendo el diseño original de tus plantillas.
+**Slide AI** es una aplicación completa para generar presentaciones PowerPoint con IA, manteniendo el diseño original de tus plantillas.
 
 ### Arquitectura
 

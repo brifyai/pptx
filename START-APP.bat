@@ -1,11 +1,11 @@
 @echo off
-title AI Presentation Studio
+title Slide AI
 color 0A
 
 echo.
 echo ╔════════════════════════════════════════════════════════╗
 echo ║                                                        ║
-echo ║        🎨 AI PRESENTATION STUDIO 🎨                   ║
+echo ║        🎨 SLIDE AI 🎨                                 ║
 echo ║                                                        ║
 echo ║        Powered by Chutes AI + python-pptx             ║
 echo ║                                                        ║

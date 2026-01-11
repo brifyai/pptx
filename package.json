@@ -1,7 +1,7 @@
 {
-  "name": "ai-presentation-app",
+  "name": "slide-ai",
   "version": "1.0.0",
-  "description": "App para generar presentaciones con IA respetando diseños personalizados",
+  "description": "Slide AI - App para generar presentaciones con IA respetando diseños personalizados",
   "type": "module",
   "private": true,
   "dependencies": {

@@ -1,4 +1,4 @@
-# 📚 Índice de Documentación - AI Presentation Studio
+# 📚 Índice de Documentación - Slide AI
 
 ## 🎯 Guías de Inicio
 

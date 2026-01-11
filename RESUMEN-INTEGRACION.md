@@ -2,7 +2,7 @@
 
 ## ✅ Estado: COMPLETAMENTE INTEGRADO
 
-**AI Presentation Studio** está 100% integrado y funcional end-to-end.
+**Slide AI** está 100% integrado y funcional end-to-end.
 
 ---
 

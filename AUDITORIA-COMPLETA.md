@@ -1,4 +1,4 @@
-# 🔍 Auditoría Completa - AI Presentation Studio
+# 🔍 Auditoría Completa - Slide AI
 
 **Fecha:** Enero 2026  
 **Versión:** 1.0.0
@@ -7,7 +7,7 @@
 
 ## 📋 Resumen Ejecutivo
 
-**AI Presentation Studio** es una aplicación web que permite a usuarios aplicar sus templates corporativos de PowerPoint a contenido generado por IA (propio o de ChatGPT/Claude/Gemini). La app preserva el diseño visual del template y solo reemplaza el texto.
+**Slide AI** es una aplicación web que permite a usuarios aplicar sus templates corporativos de PowerPoint a contenido generado por IA (propio o de ChatGPT/Claude/Gemini). La app preserva el diseño visual del template y solo reemplaza el texto.
 
 ---
 

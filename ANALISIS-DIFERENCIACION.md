@@ -1,4 +1,4 @@
-# 🔍 Análisis de Diferenciación - AI Presentation Studio
+# 🔍 Análisis de Diferenciación - Slide AI
 
 ## 🎯 Propuesta de Valor Original
 

@@ -1,4 +1,4 @@
-# 🔍 AUDITORÍA COMPLETA - AI Presentation Studio
+# 🔍 AUDITORÍA COMPLETA - Slide AI
 
 **Fecha:** Enero 2026  
 **Versión:** 1.0.0

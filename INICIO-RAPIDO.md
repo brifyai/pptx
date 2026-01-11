@@ -1,4 +1,4 @@
-# 🚀 Inicio Rápido - AI Presentation Studio
+# 🚀 Inicio Rápido - Slide AI
 
 ## ⚡ Configuración en 5 Minutos
 
