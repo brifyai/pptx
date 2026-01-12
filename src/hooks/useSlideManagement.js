@@ -25,6 +25,30 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     }
   }, [slides, logActivity])
 
+  // Batch update for multiple slides at once
+  const handleBatchSlideUpdate = useCallback((updates, skipLog = false) => {
+    setSlides(prev => {
+      const updatedSlides = [...prev]
+      updates.forEach(update => {
+        const slideIndex = update.slideIndex
+        if (slideIndex >= 0 && slideIndex < updatedSlides.length) {
+          updatedSlides[slideIndex] = {
+            ...updatedSlides[slideIndex],
+            content: {
+              ...updatedSlides[slideIndex].content,
+              ...update.content
+            }
+          }
+        }
+      })
+      return updatedSlides
+    })
+    
+    if (!skipLog && logActivity) {
+      logActivity('edit', `${updates.length} láminas actualizadas con contenido generado`)
+    }
+  }, [logActivity])
+
   const handleNavigateSlide = useCallback((newIndex) => {
     if (newIndex !== currentSlide && newIndex >= 0 && newIndex < slides.length) {
       setCurrentSlide(newIndex)
@@ -146,6 +170,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     setCurrentSlide,
     getEmptyContent,
     handleSlideUpdate,
+    handleBatchSlideUpdate,
     handleNavigateSlide,
     handleSlideReorder,
     handleSlideAdd,

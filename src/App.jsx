@@ -114,6 +114,7 @@ function AppContent() {
     currentSlide, setCurrentSlide,
     getEmptyContent,
     handleSlideUpdate,
+    handleBatchSlideUpdate,
     handleNavigateSlide,
     handleSlideReorder,
     handleSlideAdd,
@@ -629,6 +630,7 @@ function AppContent() {
               slides={slides}
               onMessage={handleChatMessage}
               onSlideUpdate={handleSlideUpdate}
+              onBatchSlideUpdate={handleBatchSlideUpdate}
               onNavigateSlide={handleNavigateSlide}
               logActivity={logActivity}
             />

@@ -11,7 +11,7 @@ const INTERACTION_MODES = {
   ALL: { id: 'all', icon: 'layers', label: 'Toda la Presentación', description: 'Generar contenido completo', color: '#8b5cf6' }
 }
 
-function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate, onNavigateSlide, logActivity }) {
+function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate, onBatchSlideUpdate, onNavigateSlide, logActivity }) {
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [mode, setMode] = useState('chat') // chat, slide, all
@@ -262,9 +262,29 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
     if (!previewChanges) return
 
     if (previewChanges.type === 'all' || previewChanges.type === 'multiple') {
-      // Abrir Content Mapper para ajuste fino
-      setPendingContent(previewChanges.updates.map(u => u.content))
-      setShowContentMapper(true)
+      // Aplicar cambios a múltiples slides directamente
+      console.log('📝 Aplicando cambios a múltiples slides:', previewChanges.updates)
+      
+      if (onBatchSlideUpdate) {
+        // Usar batch update si está disponible
+        onBatchSlideUpdate(previewChanges.updates)
+      } else {
+        // Fallback: aplicar uno por uno
+        previewChanges.updates.forEach(update => {
+          const slide = slides[update.slideIndex]
+          if (slide) {
+            const newContent = {
+              ...slide.content,
+              ...update.content
+            }
+            onSlideUpdate(slide.id, newContent)
+          }
+        })
+      }
+      
+      // Enviar mensaje de confirmación
+      onMessage('Aplicar cambios', previewChanges.message + `\n\n✅ ${previewChanges.updates.length} láminas actualizadas`)
+      
     } else if (previewChanges.type === 'slide') {
       // Aplicar cambio a un slide - fusionar con contenido existente
       const slide = slides[previewChanges.slideIndex]
@@ -276,10 +296,11 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
         console.log('📝 Aplicando contenido al slide:', previewChanges.slideIndex, newContent)
         onSlideUpdate(slide.id, newContent)
       }
+      
+      // Enviar mensaje de confirmación
+      onMessage('Aplicar cambios', previewChanges.message + '\n\n✅ Cambios aplicados')
     }
 
-    // Enviar mensaje de confirmación
-    onMessage('Aplicar cambios', previewChanges.message + '\n\n✅ Cambios aplicados')
     setPreviewChanges(null)
   }
 
@@ -728,6 +749,21 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
                 <span className="material-icons">close</span>
                 Cancelar
               </button>
+              {(previewChanges.type === 'all' || previewChanges.type === 'multiple') && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    // Abrir Content Mapper para ajuste fino
+                    setPendingContent(previewChanges.updates.map(u => u.content))
+                    setShowContentMapper(true)
+                    setPreviewChanges(null)
+                  }}
+                >
+                  <span className="material-icons">tune</span>
+                  Ajustar Manualmente
+                </button>
+              )}
               <button
                 type="button"
                 className="btn-primary"
