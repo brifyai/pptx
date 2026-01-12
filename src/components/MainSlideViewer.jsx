@@ -3,6 +3,7 @@ import Draggable from 'react-draggable'
 import { useSwipe, usePinch } from '../hooks/useSwipe'
 import { useMobile } from '../hooks/useMobile'
 import ContentOverlay from './ContentOverlay'
+import ContentEditor from './ContentEditor'
 import '../styles/MainSlideViewer.css'
 
 const ChartRenderer = lazy(() => import('./ChartRenderer'))
@@ -335,6 +336,7 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
   const [editingChart, setEditingChart] = useState(null)
   const [showExtractedAssets] = useState(false) // Deshabilitado por defecto
   const [showContentOverlay, setShowContentOverlay] = useState(true) // Mostrar contenido por defecto
+  const [showContentEditor, setShowContentEditor] = useState(false) // Editor de contenido
   const isMobile = useMobile(768)
 
   // Gestos mobile: Swipe para navegar entre slides
@@ -415,16 +417,25 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
 
   return (
     <div className="main-slide-viewer">
-      {/* Toggle button for content overlay */}
-      <button
-        className="content-overlay-toggle"
-        onClick={() => setShowContentOverlay(!showContentOverlay)}
-        title={showContentOverlay ? 'Ocultar contenido' : 'Mostrar contenido'}
-      >
-        <span className="material-icons">
-          {showContentOverlay ? 'visibility_off' : 'visibility'}
-        </span>
-      </button>
+      {/* Control buttons */}
+      <div className="slide-controls">
+        <button
+          className="control-btn"
+          onClick={() => setShowContentOverlay(!showContentOverlay)}
+          title={showContentOverlay ? 'Ocultar contenido' : 'Mostrar contenido'}
+        >
+          <span className="material-icons">
+            {showContentOverlay ? 'visibility_off' : 'visibility'}
+          </span>
+        </button>
+        <button
+          className="control-btn"
+          onClick={() => setShowContentEditor(true)}
+          title="Editar contenido"
+        >
+          <span className="material-icons">edit</span>
+        </button>
+      </div>
       
       <div 
         className="slide-canvas" 
@@ -525,6 +536,18 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
             />
           ))}
         </div>
+      )}
+
+      {/* Content Editor Modal */}
+      {showContentEditor && (
+        <ContentEditor
+          slide={slide}
+          onSave={(newContent) => {
+            onSlideUpdate(slide.id, newContent)
+            setShowContentEditor(false)
+          }}
+          onClose={() => setShowContentEditor(false)}
+        />
       )}
     </div>
   )

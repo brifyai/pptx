@@ -8,12 +8,17 @@
   position: relative;
 }
 
-/* Toggle button for content overlay */
-.content-overlay-toggle {
+/* Control buttons */
+.slide-controls {
   position: absolute;
   top: 20px;
   right: 20px;
   z-index: 100;
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -28,17 +33,17 @@
   transition: all 0.2s ease;
 }
 
-.content-overlay-toggle:hover {
+.control-btn:hover {
   background: var(--bg-hover, #f8f9fa);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transform: scale(1.05);
 }
 
-.content-overlay-toggle:active {
+.control-btn:active {
   transform: scale(0.95);
 }
 
-.content-overlay-toggle .material-icons {
+.control-btn .material-icons {
   font-size: 24px;
 }
 
