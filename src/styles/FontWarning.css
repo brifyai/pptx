@@ -416,3 +416,74 @@
     flex-wrap: wrap;
   }
 }
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .font-warning {
+    position: fixed;
+    bottom: 80px; /* Above the tab bar */
+    left: 12px;
+    right: 12px;
+    margin: 0;
+    border-radius: 12px;
+    z-index: 9000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideUpNotification 0.3s ease-out;
+  }
+
+  @keyframes slideUpNotification {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .font-warning-header {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .font-warning-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .font-warning-icon .material-icons {
+    font-size: 18px;
+  }
+
+  .font-warning-summary strong {
+    font-size: 13px;
+  }
+
+  .font-warning-summary span {
+    font-size: 11px;
+  }
+
+  .font-warning-content {
+    padding: 0 12px 12px;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  /* Make close button more prominent on mobile */
+  .font-warning-close {
+    width: 32px;
+    height: 32px;
+    background: rgba(133, 100, 4, 0.1);
+    border-radius: 50%;
+  }
+
+  /* When expanded, make it a bottom sheet */
+  .font-warning.expanded {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 16px 16px 0 0;
+    max-height: 60vh;
+  }
+}

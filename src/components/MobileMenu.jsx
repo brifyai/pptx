@@ -1,7 +1,23 @@
 import { useEffect } from 'react'
 import '../styles/MobileMenu.css'
 
-function MobileMenu({ isOpen, onClose, user, onLogout }) {
+function MobileMenu({ 
+  isOpen, 
+  onClose, 
+  user, 
+  onLogout,
+  onShowProfile,
+  onShowLibrary,
+  onShowThemes,
+  onShowAnalytics,
+  onShowCollaboration,
+  onShowHistory,
+  onShowAssets,
+  onShowShortcuts,
+  onShowHelp,
+  onShowSettings,
+  onNavigateHome
+}) {
   // Cerrar con ESC
   useEffect(() => {
     const handleEsc = (e) => {
@@ -25,17 +41,55 @@ function MobileMenu({ isOpen, onClose, user, onLogout }) {
 
   if (!isOpen) return null
 
+  const handleAction = (action) => {
+    onClose()
+    
+    switch (action) {
+      case 'profile':
+        onShowProfile?.()
+        break
+      case 'library':
+        onShowLibrary?.()
+        break
+      case 'theme':
+        onShowThemes?.()
+        break
+      case 'analytics':
+        onShowAnalytics?.()
+        break
+      case 'collaboration':
+        onShowCollaboration?.()
+        break
+      case 'history':
+        onShowHistory?.()
+        break
+      case 'assets':
+        onShowAssets?.()
+        break
+      case 'shortcuts':
+        onShowShortcuts?.()
+        break
+      case 'help':
+        onShowHelp?.()
+        break
+      case 'settings':
+        onShowSettings?.()
+        break
+      case 'home':
+        onNavigateHome?.()
+        break
+      default:
+        console.log('Acción no implementada:', action)
+    }
+  }
+
   const menuItems = [
     { icon: 'account_circle', label: 'Mi Perfil', action: 'profile' },
     { icon: 'folder', label: 'Biblioteca de Templates', action: 'library' },
     { icon: 'palette', label: 'Personalizar Tema', action: 'theme' },
     { icon: 'analytics', label: 'Analytics', action: 'analytics' },
-    { icon: 'groups', label: 'Colaboración', action: 'collaboration' },
     { icon: 'history', label: 'Historial de Versiones', action: 'history' },
     { icon: 'photo_library', label: 'Assets', action: 'assets' },
-    { icon: 'keyboard', label: 'Atajos de Teclado', action: 'shortcuts' },
-    { icon: 'help', label: 'Ayuda y Tutorial', action: 'help' },
-    { icon: 'settings', label: 'Configuración', action: 'settings' },
   ]
 
   return (
@@ -64,10 +118,7 @@ function MobileMenu({ isOpen, onClose, user, onLogout }) {
             <button
               key={index}
               className="mobile-menu-item"
-              onClick={() => {
-                console.log('Menu action:', item.action)
-                onClose()
-              }}
+              onClick={() => handleAction(item.action)}
             >
               <span className="material-icons menu-item-icon">{item.icon}</span>
               <span className="menu-item-label">{item.label}</span>
@@ -77,7 +128,10 @@ function MobileMenu({ isOpen, onClose, user, onLogout }) {
         </div>
 
         <div className="mobile-menu-footer">
-          <button className="logout-btn" onClick={onLogout}>
+          <button className="logout-btn" onClick={() => {
+            onClose()
+            onLogout?.()
+          }}>
             <span className="material-icons">logout</span>
             <span>Cerrar Sesión</span>
           </button>

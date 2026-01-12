@@ -588,3 +588,74 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(210, 71, 38, 0.4);
 }
+
+/* Mobile styles for ThemeCustomizer */
+@media (max-width: 768px) {
+  .theme-customizer-pro {
+    width: 95%;
+    max-width: none;
+    max-height: 85vh;
+    margin: 10px;
+  }
+
+  .customizer-header {
+    padding: 16px;
+  }
+
+  .customizer-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .customizer-tabs {
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  .customizer-tabs button {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .customizer-tabs button span.material-icons {
+    font-size: 18px;
+  }
+
+  .customizer-content {
+    padding: 16px;
+  }
+
+  /* Hide mode toggle on mobile - not fully implemented */
+  .mode-toggle {
+    display: none;
+  }
+
+  .section-header h4 {
+    font-size: 1rem;
+  }
+
+  .section-header p {
+    font-size: 0.85rem;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .preset-card {
+    border-radius: 10px;
+  }
+
+  .preset-name {
+    font-size: 0.8rem;
+  }
+
+  .customizer-footer {
+    padding: 12px 16px;
+  }
+
+  .customizer-footer button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+}

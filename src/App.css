@@ -1235,3 +1235,98 @@ body.editor-mode {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ============================================
+   MOBILE EDITOR LAYOUT - 3 Panel Fix
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Hide resize handles on mobile */
+  .resize-handle {
+    display: none !important;
+  }
+
+  /* Make panels stack vertically and take full width */
+  .resizable-panel-wrapper {
+    width: 100% !important;
+    flex-direction: column !important;
+  }
+
+  .resizable-panel-content {
+    width: 100% !important;
+  }
+
+  /* Main layout - single column, no scroll on container */
+  .main-layout-content {
+    flex-direction: column !important;
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+
+  /* Left panel (thumbnails) - HIDE on mobile, use swipe instead */
+  .main-layout-content > .resizable-panel-wrapper.left {
+    display: none !important;
+  }
+
+  /* Center panel (main viewer) - takes full space */
+  .main-layout-content > .center-panel {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Right panel (chat) - compact at bottom */
+  .main-layout-content > .resizable-panel-wrapper.right {
+    order: 3;
+    flex-shrink: 0;
+    height: auto !important;
+    max-height: 35vh !important;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .main-layout-content > .resizable-panel-wrapper.right .resizable-panel-content {
+    height: auto !important;
+    max-height: 35vh !important;
+  }
+
+  .main-layout-content > .resizable-panel-wrapper.right .chat-panel {
+    height: auto !important;
+    max-height: 35vh !important;
+  }
+
+  /* Compact chat header */
+  .main-layout-content > .resizable-panel-wrapper.right .chat-header {
+    padding: 8px 12px !important;
+  }
+
+  .main-layout-content > .resizable-panel-wrapper.right .chat-header h3 {
+    font-size: 0.9rem !important;
+  }
+
+  /* Chat messages area - scrollable */
+  .main-layout-content > .resizable-panel-wrapper.right .chat-messages {
+    max-height: 15vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Chat input compact */
+  .main-layout-content > .resizable-panel-wrapper.right .chat-input-container {
+    padding: 8px 12px !important;
+  }
+
+  /* Hide mode bar on mobile to save space */
+  .main-layout-content > .resizable-panel-wrapper.right .mode-bar {
+    display: none !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .main-layout-content > .center-panel {
+    flex: 1;
+  }
+
+  .main-layout-content > .resizable-panel-wrapper.right {
+    max-height: 40vh !important;
+  }
+}

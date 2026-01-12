@@ -926,6 +926,26 @@ function AppContent() {
           onClose={() => setShowMobileMenu(false)}
           user={user}
           onLogout={handleLogout}
+          onShowProfile={() => setShowProfile(true)}
+          onShowLibrary={() => setShowTemplateLibrary(true)}
+          onShowThemes={() => setShowThemes(true)}
+          onShowAnalytics={() => setShowAnalytics(true)}
+          onShowCollaboration={() => {
+            // TODO: Implementar colaboración
+            showToast('Colaboración próximamente')
+          }}
+          onShowHistory={() => setShowHistory(true)}
+          onShowAssets={() => setShowAssets(true)}
+          onShowShortcuts={() => setShowKeyboardHelp(true)}
+          onShowHelp={() => {
+            // Iniciar tour de onboarding
+            setShowOnboarding(true)
+          }}
+          onShowSettings={() => {
+            // TODO: Implementar configuración
+            showToast('Configuración próximamente')
+          }}
+          onNavigateHome={() => navigate('/')}
         />
       )}
 
@@ -1148,6 +1168,7 @@ function AppContent() {
           <VersionHistory 
             slides={slides}
             onRestore={handleVersionRestore}
+            onClose={() => setShowHistory(false)}
           />
         )}
         

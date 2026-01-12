@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import '../styles/VersionHistory.css'
 
 // Lazy loaded: Solo se carga cuando el usuario abre el panel de historial
-function VersionHistory({ slides, onRestore }) {
+function VersionHistory({ slides, onRestore, onClose }) {
   const [history, setHistory] = useState([])
   const [currentVersion, setCurrentVersion] = useState(0)
 
@@ -35,30 +35,45 @@ function VersionHistory({ slides, onRestore }) {
   }
 
   return (
-    <div className="version-history">
-      <h3>
-        <span className="material-icons">history</span>
-        Historial de Versiones
-      </h3>
-      <div className="version-list">
-        {history.slice().reverse().map((version, index) => (
-          <div 
-            key={version.id}
-            className={`version-item ${index === currentVersion ? 'current' : ''}`}
-          >
-            <div className="version-info">
-              <span className="version-time">{formatTime(version.timestamp)}</span>
-              <span className="version-desc">{version.description}</span>
+    <div className="version-history-overlay" onClick={onClose}>
+      <div className="version-history" onClick={e => e.stopPropagation()}>
+        <div className="version-header">
+          <h3>
+            <span className="material-icons">history</span>
+            Historial de Versiones
+          </h3>
+          <button className="close-btn" onClick={onClose}>
+            <span className="material-icons">close</span>
+          </button>
+        </div>
+        <div className="version-list">
+          {history.length === 0 ? (
+            <div className="empty-history">
+              <span className="material-icons">hourglass_empty</span>
+              <p>No hay versiones guardadas</p>
+              <span className="hint">Los cambios se guardarán automáticamente</span>
             </div>
-            <button 
-              className="restore-btn"
-              onClick={() => handleRestore(version)}
-            >
-              <span className="material-icons">restore</span>
-              Restaurar
-            </button>
-          </div>
-        ))}
+          ) : (
+            history.slice().reverse().map((version, index) => (
+              <div 
+                key={version.id}
+                className={`version-item ${index === currentVersion ? 'current' : ''}`}
+              >
+                <div className="version-info">
+                  <span className="version-time">{formatTime(version.timestamp)}</span>
+                  <span className="version-desc">{version.description}</span>
+                </div>
+                <button 
+                  className="restore-btn"
+                  onClick={() => handleRestore(version)}
+                >
+                  <span className="material-icons">restore</span>
+                  Restaurar
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

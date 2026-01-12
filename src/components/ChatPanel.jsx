@@ -609,7 +609,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
                 handleSend()
               }
             }}
-            rows={2}
+            rows={1}
           />
         </div>
 

@@ -15,6 +15,7 @@ function ResizablePanel({
   })
   const [isResizing, setIsResizing] = useState(false)
   const panelRef = useRef(null)
+  const handleRef = useRef(null)
 
   useEffect(() => {
     if (!isResizing) return
@@ -63,11 +64,14 @@ function ResizablePanel({
   return (
     <div 
       ref={panelRef}
-      className={`resizable-panel ${position}`}
+      className={`resizable-panel-wrapper ${position}`}
       style={{ width: `${width}px` }}
     >
-      {children}
+      <div className="resizable-panel-content">
+        {children}
+      </div>
       <div 
+        ref={handleRef}
         className={`resize-handle ${position} ${isResizing ? 'active' : ''}`}
         onMouseDown={handleMouseDown}
       >

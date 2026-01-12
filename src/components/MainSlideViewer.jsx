@@ -490,6 +490,20 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
           />
         </Suspense>
       )}
+
+      {/* Mobile slide indicator dots */}
+      {isMobile && totalSlides > 1 && (
+        <div className="mobile-slide-indicator">
+          {Array.from({ length: totalSlides }, (_, i) => (
+            <button
+              key={i}
+              className={`slide-dot ${i === slideIndex ? 'active' : ''}`}
+              onClick={() => onNavigateSlide?.(i)}
+              aria-label={`Ir a lámina ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
