@@ -149,6 +149,9 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
             "number": slide_idx + 1,
             "type": detect_slide_type(slide),
             "layout": slide.slide_layout.name,
+            "layoutType": get_layout_category(slide.slide_layout.name),  # Nuevo
+            "isTitle": is_title_slide(slide),  # Nuevo
+            "isCover": slide_idx == 0,  # Nuevo: primera slide es portada
             "background": slide_bg,
             "preview": slide_images[slide_idx] if slide_idx < len(slide_images) else None,
             "textAreas": [],
@@ -176,20 +179,128 @@ def analyze_presentation(pptx_path: str) -> Dict[str, Any]:
 
 def detect_slide_type(slide) -> str:
     """
-    Detecta el tipo de diapositiva basándose en su layout
+    Detecta el tipo de diapositiva basándose en múltiples criterios:
+    - Layout name
+    - Posición en la presentación
+    - Cantidad y tipo de placeholders
+    - Estructura de contenido
     """
     layout_name = slide.slide_layout.name.lower()
+    slide_index = slide.slide_id  # Posición en la presentación
     
-    if 'title' in layout_name and 'only' in layout_name:
-        return 'title'
-    elif 'title' in layout_name:
-        return 'title'
-    elif 'blank' in layout_name:
+    # Contar placeholders por tipo
+    title_count = 0
+    subtitle_count = 0
+    content_count = 0
+    picture_count = 0
+    
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = shape.placeholder_format.type
+            # 1 = Title, 2 = Body/Content, 3 = Center Title, 13 = Subtitle, 18 = Picture
+            if ph_type == 1 or ph_type == 3:  # Title or Center Title
+                title_count += 1
+            elif ph_type == 13:  # Subtitle
+                subtitle_count += 1
+            elif ph_type == 2:  # Body/Content
+                content_count += 1
+            elif ph_type == 18:  # Picture
+                picture_count += 1
+    
+    # Detección por layout name (más específico)
+    if 'title' in layout_name:
+        if 'only' in layout_name or 'slide' in layout_name:
+            return 'title'  # Portada
+        elif 'section' in layout_name:
+            return 'section'  # Separador de sección
+        elif 'content' in layout_name:
+            return 'title_content'  # Título con contenido
+    
+    if 'blank' in layout_name or 'en blanco' in layout_name:
         return 'blank'
-    elif 'content' in layout_name:
+    
+    if 'section' in layout_name or 'sección' in layout_name:
+        return 'section'
+    
+    if 'comparison' in layout_name or 'comparación' in layout_name:
+        return 'comparison'
+    
+    if 'two' in layout_name or 'dos' in layout_name:
+        return 'two_content'
+    
+    if 'picture' in layout_name or 'imagen' in layout_name:
+        return 'picture'
+    
+    if 'quote' in layout_name or 'cita' in layout_name:
+        return 'quote'
+    
+    # Detección por estructura de placeholders
+    if title_count > 0 and subtitle_count > 0 and content_count == 0:
+        return 'title'  # Portada típica: título + subtítulo
+    
+    if title_count > 0 and content_count > 0:
+        return 'content'  # Slide de contenido típico
+    
+    if title_count == 0 and content_count == 0 and picture_count > 0:
+        return 'picture'  # Solo imágenes
+    
+    if title_count > 0 and content_count == 0 and subtitle_count == 0:
+        return 'section'  # Separador de sección
+    
+    # Detección por posición (heurística)
+    # La primera slide suele ser portada
+    if slide_index == 1 and title_count > 0:
+        return 'title'
+    
+    # Default
+    return 'content'
+
+
+def get_layout_category(layout_name: str) -> str:
+    """
+    Categoriza el layout en tipos generales
+    """
+    layout_lower = layout_name.lower()
+    
+    if 'title' in layout_lower and ('only' in layout_lower or 'slide' in layout_lower):
+        return 'cover'
+    elif 'title' in layout_lower:
+        return 'title_slide'
+    elif 'section' in layout_lower or 'sección' in layout_lower:
+        return 'section_header'
+    elif 'blank' in layout_lower or 'en blanco' in layout_lower:
+        return 'blank'
+    elif 'two' in layout_lower or 'dos' in layout_lower or 'comparison' in layout_lower:
+        return 'two_column'
+    elif 'picture' in layout_lower or 'imagen' in layout_lower:
+        return 'picture_focused'
+    elif 'content' in layout_lower or 'contenido' in layout_lower:
         return 'content'
     else:
-        return 'content'
+        return 'other'
+
+
+def is_title_slide(slide) -> bool:
+    """
+    Determina si una slide es de tipo título/portada
+    basándose en la estructura de placeholders
+    """
+    has_title = False
+    has_subtitle = False
+    has_content = False
+    
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = shape.placeholder_format.type
+            if ph_type in [1, 3]:  # Title or Center Title
+                has_title = True
+            elif ph_type == 13:  # Subtitle
+                has_subtitle = True
+            elif ph_type == 2:  # Body/Content
+                has_content = True
+    
+    # Es título si tiene título y subtítulo pero NO contenido
+    return has_title and has_subtitle and not has_content
 
 def get_theme_colors(slide) -> Dict[str, str]:
     """

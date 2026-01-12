@@ -25,6 +25,35 @@
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  position: relative;
+}
+
+/* Badges de tipo de slide */
+.slide-type-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slide-type-badge .material-icons {
+  font-size: 14px;
+  color: white;
+}
+
+.cover-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.section-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
 .thumbnail:hover {

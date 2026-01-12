@@ -53,6 +53,19 @@ function ThumbnailItem({
       {...longPressHandlers}
     >
       <div className="thumbnail-number">{index + 1}</div>
+      
+      {/* Badge de tipo de slide */}
+      {(slide.isCover || slide.layoutType === 'cover' || (index === 0 && slide.type === 'title')) && (
+        <div className="slide-type-badge cover-badge" title="Portada">
+          <span className="material-icons">home</span>
+        </div>
+      )}
+      {slide.layoutType === 'section_header' && (
+        <div className="slide-type-badge section-badge" title="Separador de Sección">
+          <span className="material-icons">segment</span>
+        </div>
+      )}
+      
       <div className="thumbnail-preview">
         {slide.preview ? (
           <img 
