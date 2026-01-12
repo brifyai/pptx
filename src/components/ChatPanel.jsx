@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { generateAIResponse, generateFullPresentation, initializePresentationContext } from '../services/aiService'
+import { containsUrl } from '../services/webSearchService'
 import '../styles/ChatPanel.css'
 
 const ContentMapper = lazy(() => import('./ContentMapper'))
@@ -262,8 +263,19 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
   // Detectar intención de búsqueda web
   const detectWebSearchIntent = (message) => {
     const msg = message.toLowerCase()
-    const keywords = ['investiga', 'busca', 'información sobre', 'qué es', 'quién es', 'dónde está']
-    return keywords.some(k => msg.includes(k)) || msg.includes('http')
+    
+    // Detectar URLs
+    if (containsUrl(message)) {
+      return true
+    }
+    
+    // Palabras clave de búsqueda
+    const keywords = [
+      'investiga', 'busca', 'información sobre', 'qué es', 'quién es', 'dónde está',
+      'analiza el sitio', 'analiza la página', 'revisa', 'consulta',
+      'página web', 'sitio web', 'website', 'url'
+    ]
+    return keywords.some(k => msg.includes(k))
   }
 
   // Aplicar cambios del preview
