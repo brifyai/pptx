@@ -1514,3 +1514,253 @@
 .font-adjusted-indicator .material-icons {
   font-size: 10px;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE SUPPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-theme .slide-viewer {
+  background: var(--bg-light);
+}
+
+.dark-theme .slide-thumbnails {
+  background: var(--bg-light);
+}
+
+.dark-theme .thumbnail {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .thumbnail:hover {
+  background: var(--bg-section);
+}
+
+.dark-theme .thumbnail.active {
+  background: rgba(232, 93, 58, 0.1);
+}
+
+.dark-theme .thumbnail-number {
+  color: var(--text-secondary);
+}
+
+.dark-theme .thumbnail-preview {
+  background: var(--bg-section);
+  border: 1px solid var(--border-light);
+}
+
+.dark-theme .thumbnail-preview img {
+  opacity: 0.95;
+}
+
+.dark-theme .thumbnail-name {
+  color: var(--text-secondary);
+}
+
+.dark-theme .thumbnail.active .thumbnail-name {
+  color: var(--ppt-orange);
+}
+
+.dark-theme .slide-name-input {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.dark-theme .thumbnail-options {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+}
+
+.dark-theme .thumbnail-options .material-icons {
+  color: var(--text-secondary);
+}
+
+.dark-theme .add-slide-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+  color: var(--text-muted);
+}
+
+.dark-theme .add-slide-btn:hover {
+  background: rgba(232, 93, 58, 0.1);
+  border-color: var(--ppt-orange);
+  color: var(--ppt-orange);
+}
+
+.dark-theme .context-menu {
+  background: var(--bg-light);
+  border-color: var(--border-light);
+}
+
+.dark-theme .context-menu-item {
+  color: var(--text-primary);
+}
+
+.dark-theme .context-menu-item:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .context-menu-item.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.dark-theme .context-menu-divider {
+  background: var(--border-light);
+}
+
+.dark-theme .nav-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.dark-theme .nav-btn:hover:not(:disabled) {
+  border-color: var(--ppt-orange);
+  color: var(--ppt-orange);
+}
+
+.dark-theme .slide-indicator {
+  color: var(--text-secondary);
+}
+
+.dark-theme .asset-item {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .chart-container {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .loading-chart {
+  background: var(--bg-section);
+  color: var(--text-secondary);
+}
+
+.dark-theme .asset-toolbar {
+  background: var(--bg-light);
+}
+
+.dark-theme .asset-toolbar button {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .chart-editor {
+  background: var(--bg-light);
+}
+
+.dark-theme .editor-header {
+  border-color: var(--border-light);
+}
+
+.dark-theme .editor-header h3 {
+  color: var(--text-primary);
+}
+
+.dark-theme .editor-header button {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .editor-header button:hover {
+  background: var(--bg-section);
+}
+
+.dark-theme .form-group label {
+  color: var(--text-secondary);
+}
+
+.dark-theme .form-group input {
+  background: var(--bg-input);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.dark-theme .editor-footer {
+  background: var(--bg-section);
+  border-color: var(--border-light);
+}
+
+.dark-theme .editor-footer .btn-secondary {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.dark-theme .toggle-assets-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+}
+
+.dark-theme .overlay-input {
+  background: rgba(26, 26, 46, 0.85);
+  color: var(--text-primary);
+}
+
+.dark-theme .overlay-input:hover {
+  background: rgba(26, 26, 46, 0.95);
+  border-color: var(--border-light);
+}
+
+.dark-theme .overlay-input:focus {
+  background: var(--bg-light);
+}
+
+.dark-theme .title-input,
+.dark-theme .heading-input {
+  color: var(--text-primary);
+}
+
+.dark-theme .subtitle-input {
+  color: var(--text-secondary);
+}
+
+.dark-theme .bullet-input {
+  color: var(--text-primary);
+}
+
+.dark-theme .add-bullet-btn {
+  background: rgba(232, 93, 58, 0.15);
+}
+
+.dark-theme .add-bullet-btn:hover {
+  background: rgba(232, 93, 58, 0.25);
+}
+
+.dark-theme .remove-bullet-btn {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.dark-theme .editable {
+  color: var(--text-primary);
+}
+
+.dark-theme .editable:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+}
+
+.dark-theme .editable:focus {
+  background: var(--bg-light);
+}
+
+.dark-theme .slide-title,
+.dark-theme .slide-heading {
+  color: var(--text-primary);
+}
+
+.dark-theme .slide-subtitle {
+  color: var(--text-secondary);
+}
+
+.dark-theme .bullet-text {
+  color: var(--text-primary);
+}
+
+
+/* Fix para thumbnails sin preview en dark mode */
+.dark-theme .thumbnail .thumbnail-preview:not(:has(img)) {
+  background: var(--bg-elevated);
+}
+
+.dark-theme .mini-slide {
+  background: var(--bg-elevated);
+}

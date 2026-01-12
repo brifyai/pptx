@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import '../styles/ProfilePanel.css'
 
-function ProfilePanel({ isOpen, onClose, onSelectTemplate, onLogout }) {
+function ProfilePanel({ isOpen, onClose, onSelectTemplate, onLogout, initialTab = 'profile' }) {
   const [savedTemplates, setSavedTemplates] = useState([])
-  const [activeTab, setActiveTab] = useState('profile') // profile, templates, settings
+  const [activeTab, setActiveTab] = useState(initialTab) // profile, templates, settings
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -19,8 +19,9 @@ function ProfilePanel({ isOpen, onClose, onSelectTemplate, onLogout }) {
     if (isOpen) {
       loadSavedTemplates()
       loadProfile()
+      setActiveTab(initialTab) // Reset to initial tab when opening
     }
-  }, [isOpen])
+  }, [isOpen, initialTab])
 
   const loadProfile = () => {
     const savedProfile = JSON.parse(localStorage.getItem('userProfile') || '{}')

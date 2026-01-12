@@ -67,3 +67,29 @@ body.resizing * {
   cursor: col-resize !important;
   user-select: none;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE SUPPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-theme .resize-handle {
+  background: var(--border-light);
+}
+
+.dark-theme .resize-handle:hover {
+  background-color: var(--text-muted);
+}
+
+.dark-theme .resize-handle.active {
+  background-color: var(--ppt-orange);
+}
+
+.dark-theme .resize-handle-line {
+  background-color: var(--text-muted);
+}
+
+.dark-theme .resize-handle:hover .resize-handle-line,
+.dark-theme .resize-handle.active .resize-handle-line {
+  background-color: var(--text-secondary);
+}

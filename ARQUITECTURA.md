@@ -21,6 +21,13 @@
 │  ├─ TemplateUploader.jsx (Carga)                                     │
 │  └─ Features/* (Lazy loaded)                                         │
 │                                                                       │
+│  Hooks (Custom):                                                     │
+│  ├─ useSlideManagement.js (CRUD slides)                              │
+│  ├─ useModals.js (16+ estados de modales)                            │
+│  ├─ useAuth.js (autenticación)                                       │
+│  ├─ useActivityLog.js (logging)                                      │
+│  └─ useTemplateManager.js (templates)                                │
+│                                                                       │
 │  Servicios:                                                          │
 │  ├─ aiService.js ────────────────┐                                   │
 │  ├─ visionService.js             │                                   │
@@ -38,28 +45,40 @@
                     │                         │   │
 ┌───────────────────▼─────────────────────────┼───┼────────────────────┐
 │              BACKEND (Python + FastAPI)     │   │                    │
-│              Puerto: 8000                   │   │                    │
+│              Puerto: 8000 - v2.0.0          │   │                    │
 ├─────────────────────────────────────────────┼───┼────────────────────┤
-│  Endpoints:                                 │   │                    │
-│  ├─ POST /api/analyze                       │   │                    │
-│  ├─ POST /api/generate                      │   │                    │
-│  ├─ POST /api/export/pptx                   │   │                    │
-│  ├─ POST /api/export/pdf                    │   │                    │
-│  ├─ POST /api/extract-content               │   │                    │
-│  ├─ POST /api/presentations/create          │   │                    │
-│  ├─ GET  /api/presentations/{id}            │   │                    │
-│  ├─ PUT  /api/presentations/{id}            │   │                    │
-│  └─ WS   /ws/{id}                           │   │                    │
+│  main.py (72 líneas - Entry Point)          │   │                    │
+│  ├─ Configuración CORS                      │   │                    │
+│  ├─ Registro de routers                     │   │                    │
+│  └─ WebSocket endpoint                      │   │                    │
 │                                              │   │                    │
-│  Módulos:                                   │   │                    │
-│  ├─ main.py (FastAPI app)                   │   │                    │
+│  routes/ (Endpoints por dominio):           │   │                    │
+│  ├─ analysis.py (análisis PPTX)             │   │                    │
+│  ├─ export.py (exportación + cola async)    │   │                    │
+│  ├─ templates.py (gestión templates)        │   │                    │
+│  └─ collaboration.py (WebSocket, CRUD)      │   │                    │
+│                                              │   │                    │
+│  services/ (Lógica de negocio):             │   │                    │
+│  ├─ gemini_vision.py (análisis visual)      │   │                    │
+│  └─ slide_converter.py (conversión)         │   │                    │
+│                                              │   │                    │
+│  core/ (Componentes compartidos):           │   │                    │
+│  ├─ websocket_manager.py (conexiones WS)    │   │                    │
+│  └─ task_queue.py (cola async 4 workers)    │   │                    │
+│                                              │   │                    │
+│  schemas/ (Validación):                     │   │                    │
+│  └─ requests.py (Pydantic models)           │   │                    │
+│                                              │   │                    │
+│  utils/ (Utilidades):                       │   │                    │
+│  └─ logging_utils.py                        │   │                    │
+│                                              │   │                    │
+│  Módulos especializados:                    │   │                    │
+│  ├─ pptx_xml_cloner.py (★ Moat técnico)     │   │                    │
 │  ├─ pptx_analyzer.py                        │   │                    │
 │  ├─ pptx_generator.py                       │   │                    │
 │  ├─ pptx_to_images.py                       │   │                    │
-│  ├─ database.py                             │   │                    │
-│  └─ presentations.db (SQLite)               │   │                    │
+│  └─ database.py (SQLite WAL mode)           │   │                    │
 └─────────────────────────────────────────────┼───┼────────────────────┘
-                                              │   │
                                               │   │
                     ┌─────────────────────────┘   │
                     │                             │
@@ -74,6 +93,61 @@
 │  - Chat conversacional         │  - Detección de colores/fuentes      │
 │  - URL: llm.chutes.ai         │  - URL: generativelanguage.google... │
 └───────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🏛️ Estructura Backend Modular (v2.0.0)
+
+```
+backend/
+├── main.py                    # Entry point (72 líneas)
+├── routes/                    # Endpoints por dominio
+│   ├── analysis.py            # POST /api/analyze, /api/analyze-template
+│   ├── export.py              # POST /api/export/pptx, /pdf, /async
+│   ├── templates.py           # GET/POST /api/templates
+│   └── collaboration.py       # CRUD presentaciones + WebSocket
+├── services/                  # Lógica de negocio
+│   ├── gemini_vision.py       # Análisis visual con Gemini
+│   └── slide_converter.py     # Conversión de slides
+├── core/                      # Componentes compartidos
+│   ├── websocket_manager.py   # Gestión conexiones WS
+│   └── task_queue.py          # Cola async (4 workers)
+├── schemas/                   # Validación de datos
+│   └── requests.py            # Modelos Pydantic
+├── utils/                     # Utilidades
+│   └── logging_utils.py       # Logging estructurado
+├── pptx_xml_cloner.py         # ★ XML Cloner (moat técnico)
+├── pptx_analyzer.py           # Análisis de PPTX
+├── pptx_generator.py          # Generación de PPTX
+├── pptx_to_images.py          # Conversión a imágenes
+└── database.py                # SQLite con WAL mode
+```
+
+### Cola de Tareas Asíncronas
+
+Para operaciones pesadas (generación PPTX, procesamiento IA), se implementó una cola ligera:
+
+```python
+# core/task_queue.py
+- ThreadPoolExecutor con 4 workers
+- asyncio.Semaphore para limitar concurrencia
+- Endpoints:
+  - POST /api/export/pptx/async  → Inicia tarea
+  - GET  /api/task/{id}          → Estado de tarea
+  - GET  /api/task/{id}/download → Descarga resultado
+  - GET  /api/queue/status       → Estado de la cola
+```
+
+### SQLite Optimizado (WAL Mode)
+
+```python
+# database.py - Configuración para ~100 usuarios concurrentes
+PRAGMA journal_mode=WAL
+PRAGMA busy_timeout=5000
+PRAGMA synchronous=NORMAL
+PRAGMA cache_size=-64000
+PRAGMA temp_store=MEMORY
 ```
 
 ---
@@ -471,10 +545,11 @@ Usuario B ve cambios en tiempo real
 
 ## 📈 Escalabilidad
 
-### Actual (Desarrollo)
-- Backend: Single process
-- Base de datos: SQLite local
-- WebSockets: In-memory
+### Actual (v2.0.0)
+- Backend: Modular architecture, async task queue (4 workers)
+- Base de datos: SQLite WAL mode (~100 usuarios concurrentes)
+- WebSockets: In-memory con manager dedicado
+- Concurrencia: Semaphore + ThreadPoolExecutor
 
 ### Futuro (Producción)
 - Backend: Multiple workers (Gunicorn)
@@ -483,6 +558,7 @@ Usuario B ve cambios en tiempo real
 - Storage: AWS S3 / Google Cloud Storage
 - CDN: CloudFlare
 - Load balancer: Nginx
+- Task queue: Celery + Redis (si se requiere mayor escala)
 
 ---
 
@@ -493,14 +569,59 @@ Usuario B ve cambios en tiempo real
 - **Service layer**: Separación de lógica de negocio
 - **Lazy loading**: Features cargadas bajo demanda
 - **Context API**: Estado global (AlertProvider)
-- **Custom hooks**: Reutilización de lógica
+- **Custom hooks**: Reutilización de lógica (useSlideManagement, useModals, etc.)
 
-### Backend
-- **REST API**: Endpoints estándar
-- **WebSocket**: Comunicación bidireccional
-- **Repository pattern**: database.py
-- **Service layer**: Lógica de negocio separada
+### Backend (v2.0.0)
+- **Modular architecture**: Separación por dominio (routes/, services/, core/)
+- **REST API**: Endpoints estándar organizados por router
+- **WebSocket**: Comunicación bidireccional (websocket_manager.py)
+- **Repository pattern**: database.py con WAL mode
+- **Service layer**: Lógica de negocio en services/
 - **Dependency injection**: FastAPI
+- **Async task queue**: ThreadPoolExecutor para operaciones pesadas
+- **Pydantic validation**: Schemas tipados en schemas/
+
+---
+
+## ⭐ Moat Técnico: XML Cloner
+
+El `pptx_xml_cloner.py` es la tecnología diferenciadora del proyecto:
+
+### Capacidades
+- Preserva animaciones (`p:timing`)
+- Preserva transiciones (`p:transition`)
+- Preserva gradientes (`a:gradFill`)
+- Preserva sombras (`a:effectLst`)
+- Preserva efectos 3D (`a:scene3d`, `a:sp3d`)
+- Preserva SmartArt (`dgm:`)
+
+### Detección Semántica de Placeholders
+```python
+# Patrones multi-idioma (ES/EN/PT/FR/DE)
+PLACEHOLDER_PATTERNS = [
+    r'\[.*?\]',           # [texto]
+    r'<.*?>',             # <texto>
+    r'\{.*?\}',           # {texto}
+    r'lorem ipsum',       # Lorem ipsum
+    r'click to add',      # Click to add
+    r'haga clic',         # Haga clic para añadir
+]
+```
+
+### Validación de Fuentes
+```python
+# Antes de exportar, verifica fuentes disponibles
+get_fonts_used()           # Extrae fuentes del template
+verify_fonts_available()   # Compara con sistema
+clone_with_font_check()    # Clona con verificación
+```
+
+### QA Logging
+```python
+# Verificación de preservación post-clonado
+_capture_preservation_state()  # Estado antes
+_verify_preservation()         # Verifica después, logs warnings
+```
 
 ---
 
@@ -550,4 +671,4 @@ Usuario B ve cambios en tiempo real
 ---
 
 **Última actualización:** Enero 2026  
-**Versión:** 1.0.0
+**Versión:** 2.0.0

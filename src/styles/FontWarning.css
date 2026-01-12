@@ -487,3 +487,53 @@
     max-height: 60vh;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE SUPPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-theme .font-warning {
+  background: linear-gradient(135deg, #3d3a1a 0%, #4a4520 100%);
+  border-color: #f59e0b;
+}
+
+.dark-theme .font-warning-icon {
+  background: #f59e0b;
+  color: #1a1a2e;
+}
+
+.dark-theme .font-warning-summary strong,
+.dark-theme .font-warning-summary span {
+  color: #fef3c7;
+}
+
+.dark-theme .font-warning-toggle,
+.dark-theme .font-warning-close {
+  color: #fef3c7;
+}
+
+.dark-theme .font-warning-content {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.dark-theme .font-section h4 {
+  color: #fef3c7;
+}
+
+.dark-theme .font-list {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .font-list li {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.dark-theme .font-name {
+  color: var(--text-primary);
+}
+
+.dark-theme .font-note {
+  background: rgba(0, 0, 0, 0.2);
+  color: #fef3c7;
+}

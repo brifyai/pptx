@@ -9,9 +9,19 @@ class PresentationDB:
         self.db_path = db_path
         self.init_db()
     
+    def _get_connection(self):
+        """Obtener conexión optimizada con WAL mode"""
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+        conn.execute("PRAGMA temp_store=MEMORY")
+        return conn
+    
     def init_db(self):
-        """Inicializar base de datos"""
-        conn = sqlite3.connect(self.db_path)
+        """Inicializar base de datos con optimizaciones para concurrencia"""
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         # Tabla de presentaciones
@@ -102,7 +112,7 @@ class PresentationDB:
         permissions: Optional[Dict] = None
     ) -> str:
         """Crear nueva presentación compartida"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         presentation_id = self.generate_id()
@@ -138,7 +148,7 @@ class PresentationDB:
     
     def get_presentation(self, presentation_id: str) -> Optional[Dict]:
         """Obtener presentación por ID"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -173,7 +183,7 @@ class PresentationDB:
         user: str
     ) -> bool:
         """Actualizar slides de presentación"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         now = datetime.now().isoformat()
@@ -217,7 +227,7 @@ class PresentationDB:
     
     def get_recent_changes(self, presentation_id: str, since: Optional[str] = None) -> List[Dict]:
         """Obtener cambios recientes para sincronización"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         if since:
@@ -280,7 +290,7 @@ class PresentationDB:
         if not presentation or presentation['owner'] != user:
             return False
         
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''

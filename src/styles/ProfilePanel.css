@@ -769,3 +769,170 @@
 .btn-logout .material-icons {
   font-size: 20px;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE SUPPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-theme .profile-panel {
+  background: var(--bg-light) !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .profile-header {
+  background: var(--bg-section) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .profile-header h2 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .close-panel-btn {
+  background: var(--bg-elevated) !important;
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .close-panel-btn:hover {
+  background: var(--bg-section) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .profile-avatar {
+  background: var(--ppt-orange) !important;
+}
+
+.dark-theme .profile-info h3 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .profile-info p {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .profile-tabs {
+  background: var(--bg-section) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .tab-btn {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+}
+
+.dark-theme .tab-btn:hover {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .tab-btn.active {
+  background: var(--bg-elevated) !important;
+  color: var(--ppt-orange) !important;
+  border-color: var(--ppt-orange) !important;
+}
+
+.dark-theme .profile-content {
+  background: var(--bg-light) !important;
+}
+
+.dark-theme .profile-section h4 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .info-item {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .info-label {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .info-value {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .template-card {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .template-card:hover {
+  border-color: var(--ppt-orange) !important;
+}
+
+.dark-theme .template-name {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .template-meta {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .setting-item {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .setting-label {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .setting-description {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .setting-select {
+  background: var(--bg-input) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .setting-toggle {
+  background: var(--bg-section) !important;
+  border-color: var(--border-light) !important;
+}
+
+.dark-theme .setting-toggle.active {
+  background: var(--ppt-orange) !important;
+}
+
+.dark-theme .edit-profile-btn {
+  background: var(--ppt-orange) !important;
+  color: white !important;
+}
+
+.dark-theme .logout-btn {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .logout-btn:hover {
+  background: #ef4444 !important;
+  color: white !important;
+  border-color: #ef4444 !important;
+}
+
+.dark-theme .form-group label {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .form-group input {
+  background: var(--bg-input) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .form-group input:focus {
+  border-color: var(--ppt-orange) !important;
+}
+
+.dark-theme .empty-state {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .empty-state .material-icons {
+  color: var(--border-light) !important;
+}
