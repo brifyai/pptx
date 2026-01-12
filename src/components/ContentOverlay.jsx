@@ -7,6 +7,10 @@ import '../styles/ContentOverlay.css'
  */
 function ContentOverlay({ slide, slideWidth, slideHeight }) {
   if (!slide || !slide.content) return null
+  if (!slideWidth || !slideHeight || slideWidth <= 0 || slideHeight <= 0) {
+    console.warn('ContentOverlay: dimensiones de slide inválidas', { slideWidth, slideHeight })
+    return null
+  }
 
   const { content, layout } = slide
   const textAreas = layout?.textAreas || []
@@ -15,8 +19,14 @@ function ContentOverlay({ slide, slideWidth, slideHeight }) {
   const renderTextAreas = useMemo(() => {
     if (textAreas.length === 0) return null
 
-    return textAreas.map((area, idx) => {
+    const areas = textAreas.map((area, idx) => {
       const { type, bounds, maxChars } = area
+      
+      // Validar que bounds existe
+      if (!bounds || !bounds.x || !bounds.y || !bounds.width || !bounds.height) {
+        console.warn('ContentOverlay: bounds inválido para área', idx, area)
+        return null
+      }
       
       // Obtener el contenido correspondiente
       let textContent = ''
@@ -77,7 +87,9 @@ function ContentOverlay({ slide, slideWidth, slideHeight }) {
           </div>
         </div>
       )
-    })
+    }).filter(Boolean) // Filtrar nulls
+    
+    return areas.length > 0 ? areas : null
   }, [textAreas, content, slideWidth, slideHeight])
 
   // Fallback: Si no hay textAreas, mostrar contenido en posiciones por defecto
