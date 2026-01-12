@@ -27,20 +27,39 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
 
   // Batch update for multiple slides at once
   const handleBatchSlideUpdate = useCallback((updates, skipLog = false) => {
+    console.log('🔧 handleBatchSlideUpdate llamado')
+    console.log('📦 Updates recibidos:', updates)
+    console.log('📦 Slides actuales:', slides.length)
+    
     setSlides(prev => {
+      console.log('📦 Slides previos:', prev.length)
       const updatedSlides = [...prev]
-      updates.forEach(update => {
+      
+      updates.forEach((update, idx) => {
+        console.log(`  Procesando update ${idx}:`, update)
         const slideIndex = update.slideIndex
+        
         if (slideIndex >= 0 && slideIndex < updatedSlides.length) {
+          const oldContent = updatedSlides[slideIndex].content
+          const newContent = {
+            ...oldContent,
+            ...update.content
+          }
+          
+          console.log(`  ✅ Actualizando slide ${slideIndex}`)
+          console.log(`    Contenido anterior:`, oldContent)
+          console.log(`    Contenido nuevo:`, newContent)
+          
           updatedSlides[slideIndex] = {
             ...updatedSlides[slideIndex],
-            content: {
-              ...updatedSlides[slideIndex].content,
-              ...update.content
-            }
+            content: newContent
           }
+        } else {
+          console.error(`  ❌ Índice inválido: ${slideIndex} (total: ${updatedSlides.length})`)
         }
       })
+      
+      console.log('✅ Slides actualizados:', updatedSlides.length)
       return updatedSlides
     })
     

@@ -151,10 +151,21 @@ REGLAS CRÍTICAS:
       if (jsonMatch) {
         const result = JSON.parse(jsonMatch[0])
         
+        console.log('✅ JSON parseado exitosamente:', result)
+        console.log('📊 slideUpdates recibidos:', result.slideUpdates?.length || 0)
+        
         // Validar y ajustar contenido automáticamente
         if (result.slideUpdates) {
+          console.log('🔍 Validando contenido de cada slide...')
           result.slideUpdates = result.slideUpdates.map((update, idx) => {
             const slide = allSlides[idx]
+            console.log(`  Slide ${idx}:`, {
+              hasSlide: !!slide,
+              hasLayout: !!slide?.layout,
+              hasTextAreas: !!slide?.layout?.textAreas,
+              updateContent: update.content
+            })
+            
             if (!slide || !slide.layout?.textAreas) return update
             
             // Validar y truncar si es necesario
@@ -166,14 +177,23 @@ REGLAS CRÍTICAS:
               wasAdjusted: validatedContent !== update.content
             }
           })
+          
+          console.log('✅ Contenido validado. Total updates:', result.slideUpdates.length)
+          console.log('📦 Estructura final de slideUpdates:', JSON.stringify(result.slideUpdates, null, 2))
+        } else {
+          console.warn('⚠️ No se encontró slideUpdates en la respuesta')
         }
         
         return result
+      } else {
+        console.warn('⚠️ No se encontró JSON en la respuesta de la IA')
       }
     } catch (e) {
-      console.log('Error parsing JSON')
+      console.error('❌ Error parsing JSON:', e)
+      console.log('Respuesta que causó el error:', aiContent)
     }
 
+    console.log('⚠️ Usando fallback para generar presentación')
     return generateFallbackPresentation(topic, allSlides)
 
   } catch (error) {

@@ -96,7 +96,14 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
         setAiStatus('generating')
         aiResponse = await generateFullPresentation(cleanMessage, slides)
         
+        console.log('🎯 Respuesta de generateFullPresentation:', aiResponse)
+        console.log('📊 slideUpdates:', aiResponse.slideUpdates)
+        
         if (aiResponse.slideUpdates) {
+          console.log('✅ Se recibieron slideUpdates, mostrando preview...')
+          console.log('📦 Cantidad de updates:', aiResponse.slideUpdates.length)
+          console.log('📦 Primer update:', aiResponse.slideUpdates[0])
+          
           // Mostrar preview antes de aplicar
           setPreviewChanges({
             type: 'all',
@@ -106,6 +113,8 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
           setAiStatus(null)
           setIsTyping(false)
           return // No enviar mensaje aún, esperar confirmación
+        } else {
+          console.warn('⚠️ No se recibieron slideUpdates en la respuesta')
         }
       } else if (mode === 'slide') {
         // Editar slide específico
@@ -261,23 +270,34 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
   const applyPreviewChanges = () => {
     if (!previewChanges) return
 
+    console.log('🔧 applyPreviewChanges llamado con:', previewChanges)
+
     if (previewChanges.type === 'all' || previewChanges.type === 'multiple') {
       // Aplicar cambios a múltiples slides directamente
-      console.log('📝 Aplicando cambios a múltiples slides:', previewChanges.updates)
+      console.log('📝 Aplicando cambios a múltiples slides')
+      console.log('📦 Updates a aplicar:', previewChanges.updates)
+      console.log('📦 Cantidad de slides:', slides.length)
       
       if (onBatchSlideUpdate) {
-        // Usar batch update si está disponible
+        console.log('✅ Usando onBatchSlideUpdate')
         onBatchSlideUpdate(previewChanges.updates)
       } else {
+        console.log('⚠️ onBatchSlideUpdate no disponible, usando fallback')
         // Fallback: aplicar uno por uno
-        previewChanges.updates.forEach(update => {
+        previewChanges.updates.forEach((update, idx) => {
+          console.log(`  Aplicando update ${idx}:`, update)
           const slide = slides[update.slideIndex]
+          console.log(`  Slide encontrado:`, slide)
+          
           if (slide) {
             const newContent = {
               ...slide.content,
               ...update.content
             }
+            console.log(`  Nuevo contenido para slide ${update.slideIndex}:`, newContent)
             onSlideUpdate(slide.id, newContent)
+          } else {
+            console.error(`  ❌ No se encontró slide en índice ${update.slideIndex}`)
           }
         })
       }
@@ -287,6 +307,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
       
     } else if (previewChanges.type === 'slide') {
       // Aplicar cambio a un slide - fusionar con contenido existente
+      console.log('📝 Aplicando cambio a un solo slide')
       const slide = slides[previewChanges.slideIndex]
       if (slide) {
         const newContent = {

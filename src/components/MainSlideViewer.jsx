@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react'
 import Draggable from 'react-draggable'
 import { useSwipe, usePinch } from '../hooks/useSwipe'
 import { useMobile } from '../hooks/useMobile'
+import ContentOverlay from './ContentOverlay'
 import '../styles/MainSlideViewer.css'
 
 const ChartRenderer = lazy(() => import('./ChartRenderer'))
@@ -333,6 +334,7 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
   const [showExtractedAssets] = useState(false) // Deshabilitado por defecto
+  const [showContentOverlay, setShowContentOverlay] = useState(true) // Mostrar contenido por defecto
   const isMobile = useMobile(768)
 
   // Gestos mobile: Swipe para navegar entre slides
@@ -413,6 +415,17 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
 
   return (
     <div className="main-slide-viewer">
+      {/* Toggle button for content overlay */}
+      <button
+        className="content-overlay-toggle"
+        onClick={() => setShowContentOverlay(!showContentOverlay)}
+        title={showContentOverlay ? 'Ocultar contenido' : 'Mostrar contenido'}
+      >
+        <span className="material-icons">
+          {showContentOverlay ? 'visibility_off' : 'visibility'}
+        </span>
+      </button>
+      
       <div 
         className="slide-canvas" 
         onClick={() => setSelectedAsset(null)}
@@ -432,6 +445,15 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
               alt={`Lámina ${slideIndex + 1}`}
               className="slide-preview-image"
             />
+            
+            {/* Content Overlay - Muestra el contenido textual sobre el preview */}
+            {showContentOverlay && (
+              <ContentOverlay 
+                slide={slide}
+                slideWidth={slide.slideWidth || 9144000}
+                slideHeight={slide.slideHeight || 6858000}
+              />
+            )}
             
             {/* Indicador de mapeo preciso */}
             {slide.layout?.textAreas?.length > 0 && (
