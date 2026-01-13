@@ -3,14 +3,23 @@
   flex-shrink: 0;
   height: 100%;
   display: flex;
+  min-width: 200px !important; /* Prevenir colapso total - CRÍTICO */
+  width: auto; /* Permitir que el width inline tome precedencia */
+  /* Prevenir que el panel se colapse cuando hay modales abiertos */
+  contain: layout style;
 }
 
+/* Asegurar que el panel no se colapse cuando hay modales abiertos */
 .resizable-panel-wrapper.left {
   flex-direction: row;
+  min-width: 200px !important;
+  flex-basis: auto;
 }
 
 .resizable-panel-wrapper.right {
   flex-direction: row-reverse;
+  min-width: 300px !important;
+  flex-basis: auto;
 }
 
 .resizable-panel-content {
@@ -92,4 +101,34 @@ body.resizing * {
 .dark-theme .resize-handle:hover .resize-handle-line,
 .dark-theme .resize-handle.active .resize-handle-line {
   background-color: var(--text-secondary);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL OVERLAY PROTECTION
+   Prevenir que los modales afecten el layout de los paneles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Cuando hay un modal abierto, asegurar que los paneles mantengan su tamaño */
+body:has(.export-overlay),
+body:has(.modal-overlay),
+body:has([class*="-overlay"]) {
+  /* Prevenir scroll del body */
+  overflow: hidden;
+}
+
+/* Asegurar que el contenedor principal no se vea afectado */
+body:has(.export-overlay) .main-layout-content,
+body:has(.modal-overlay) .main-layout-content {
+  /* Mantener el layout estable */
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* Asegurar que los paneles mantengan su ancho cuando hay modales */
+body:has(.export-overlay) .resizable-panel-wrapper,
+body:has(.modal-overlay) .resizable-panel-wrapper {
+  /* Forzar que el ancho se mantenga */
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
 }

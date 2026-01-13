@@ -575,8 +575,12 @@ def extract_text_formatting(text_frame) -> Dict[str, Any]:
             formatting["bold"] = font.bold
             formatting["italic"] = font.italic
             
-            if font.color and font.color.rgb:
-                formatting["color"] = rgb_to_hex(font.color.rgb)
+            # Acceso seguro a color.rgb
+            try:
+                if font.color and hasattr(font.color, 'rgb') and font.color.rgb is not None:
+                    formatting["color"] = rgb_to_hex(font.color.rgb)
+            except (AttributeError, TypeError):
+                pass
             
             formatting["alignment"] = str(paragraph.alignment)
     
@@ -670,12 +674,12 @@ def extract_shape_data(shape) -> Dict[str, Any]:
 
 def get_color_rgb(color):
     """
-    Obtiene el color RGB de un objeto de color
+    Obtiene el color RGB de un objeto de color de forma segura
     """
     try:
-        if color.rgb:
+        if color and hasattr(color, 'rgb') and color.rgb is not None:
             return rgb_to_hex(color.rgb)
-    except:
+    except (AttributeError, TypeError):
         pass
     return None
 

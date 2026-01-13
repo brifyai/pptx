@@ -10,6 +10,9 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  /* Prevenir que el overlay afecte el layout de los elementos detrás */
+  isolation: isolate;
+  contain: layout style paint;
 }
 
 .export-modal {
@@ -340,4 +343,35 @@
 .export-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Warning Banner */
+.export-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 8px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.export-warning .material-icons {
+  color: #ff9800;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.export-warning strong {
+  color: #ff9800;
+}
+
+.export-warning small {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }

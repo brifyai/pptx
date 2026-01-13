@@ -1,5 +1,5 @@
 """
-Analysis routes - PPTX analysis, fonts, content extraction.
+Analysis routes - PPTX/PDF analysis, fonts, content extraction.
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import tempfile
@@ -14,23 +14,188 @@ from utils.logging_utils import logger
 router = APIRouter(prefix="/api", tags=["analysis"])
 
 
+def analyze_pdf(pdf_path: str) -> dict:
+    """
+    Analiza un archivo PDF y extrae sus páginas como slides.
+    Intenta usar PyMuPDF (fitz) primero, luego pdf2image como fallback.
+    """
+    import base64
+    from io import BytesIO
+    
+    # Intentar con PyMuPDF (no requiere Poppler)
+    try:
+        import fitz  # PyMuPDF
+        
+        logger.info(f"📄 Convirtiendo PDF con PyMuPDF: {pdf_path}")
+        
+        doc = fitz.open(pdf_path)
+        slides = []
+        slide_images = []
+        
+        for i, page in enumerate(doc):
+            # Renderizar página a imagen (zoom 2x para mejor calidad)
+            mat = fitz.Matrix(2, 2)
+            pix = page.get_pixmap(matrix=mat)
+            
+            # Convertir a base64
+            img_data = pix.tobytes("png")
+            img_base64 = base64.b64encode(img_data).decode()
+            
+            slide_images.append(f"data:image/png;base64,{img_base64}")
+            
+            slides.append({
+                "number": i + 1,
+                "type": "content",
+                "layout": "PDF Page",
+                "layoutType": "other",
+                "isTitle": i == 0,
+                "isCover": i == 0,
+                "textAreas": [],
+                "preview": f"data:image/png;base64,{img_base64}"
+            })
+        
+        # Obtener tamaño de la primera página
+        if doc.page_count > 0:
+            page = doc[0]
+            width = int(page.rect.width * 2)  # Con zoom 2x
+            height = int(page.rect.height * 2)
+        else:
+            width, height = 1920, 1080
+        
+        doc.close()
+        
+        return {
+            "fileName": os.path.basename(pdf_path),
+            "slideSize": {
+                "width": width * 9525,
+                "height": height * 9525
+            },
+            "slides": slides,
+            "slideImages": slide_images,
+            "extractedAssets": {
+                "logos": [],
+                "images": [],
+                "transparentImages": [],
+                "animatedElements": []
+            },
+            "sourceType": "pdf"
+        }
+        
+    except ImportError:
+        logger.info("PyMuPDF no disponible, intentando con pdf2image...")
+    
+    # Fallback a pdf2image (requiere Poppler)
+    try:
+        from pdf2image import convert_from_path
+        from PIL import Image
+        
+        logger.info(f"📄 Convirtiendo PDF con pdf2image: {pdf_path}")
+        
+        # Convertir PDF a imágenes
+        images = convert_from_path(pdf_path, dpi=150)
+        
+        slides = []
+        slide_images = []
+        
+        for i, image in enumerate(images):
+            # Convertir imagen a base64
+            buffered = BytesIO()
+            image.save(buffered, format="PNG")
+            img_base64 = base64.b64encode(buffered.getvalue()).decode()
+            
+            slide_images.append(f"data:image/png;base64,{img_base64}")
+            
+            slides.append({
+                "number": i + 1,
+                "type": "content",
+                "layout": "PDF Page",
+                "layoutType": "other",
+                "isTitle": i == 0,
+                "isCover": i == 0,
+                "textAreas": [],
+                "preview": f"data:image/png;base64,{img_base64}"
+            })
+        
+        width, height = images[0].size if images else (1920, 1080)
+        
+        return {
+            "fileName": os.path.basename(pdf_path),
+            "slideSize": {
+                "width": width * 9525,
+                "height": height * 9525
+            },
+            "slides": slides,
+            "slideImages": slide_images,
+            "extractedAssets": {
+                "logos": [],
+                "images": [],
+                "transparentImages": [],
+                "animatedElements": []
+            },
+            "sourceType": "pdf"
+        }
+        
+    except ImportError:
+        logger.warning("⚠️ Ni PyMuPDF ni pdf2image están instalados.")
+    except Exception as e:
+        logger.warning(f"⚠️ Error con pdf2image: {e}")
+    
+    # Fallback final: placeholder
+    logger.warning("⚠️ Usando análisis básico de PDF (sin imágenes).")
+    return {
+        "fileName": os.path.basename(pdf_path),
+        "slideSize": {"width": 9144000, "height": 6858000},
+        "slides": [{
+            "number": 1,
+            "type": "content",
+            "layout": "PDF",
+            "layoutType": "other",
+            "isTitle": True,
+            "isCover": True,
+            "textAreas": [],
+            "preview": None
+        }],
+        "slideImages": [],
+        "extractedAssets": {
+            "logos": [],
+            "images": [],
+            "transparentImages": [],
+            "animatedElements": []
+        },
+        "sourceType": "pdf",
+        "warning": "Instala PyMuPDF (pip install pymupdf) para soporte completo de PDF"
+    }
+
+
 @router.post("/analyze")
 async def analyze_ppt(file: UploadFile = File(...)):
     """
-    Analiza un archivo PowerPoint y extrae toda su estructura de diseño.
+    Analiza un archivo PowerPoint o PDF y extrae toda su estructura de diseño.
     """
-    if not file.filename.endswith(('.pptx', '.ppt')):
-        raise HTTPException(status_code=400, detail="Solo se aceptan archivos .pptx")
+    filename = file.filename.lower()
+    
+    # Determinar tipo de archivo
+    if filename.endswith('.pdf'):
+        file_type = 'pdf'
+        suffix = '.pdf'
+    elif filename.endswith(('.pptx', '.ppt')):
+        file_type = 'pptx'
+        suffix = '.pptx'
+    else:
+        raise HTTPException(status_code=400, detail="Solo se aceptan archivos .pptx o .pdf")
     
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pptx') as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
         
-        logger.info(f"📄 Archivo guardado en: {tmp_path}")
+        logger.info(f"📄 Archivo guardado en: {tmp_path} (tipo: {file_type})")
         
-        analysis = analyze_presentation(tmp_path)
+        if file_type == 'pdf':
+            analysis = analyze_pdf(tmp_path)
+        else:
+            analysis = analyze_presentation(tmp_path)
         
         logger.info(f"✅ Análisis completado: {len(analysis['slides'])} slides")
         

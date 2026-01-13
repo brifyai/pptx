@@ -16,12 +16,18 @@ export async function analyzeTemplate(file, skipCache = false) {
   }
   
   try {
-    // Verificar que el backend esté disponible
-    const healthCheck = await fetch(`${BACKEND_URL}/health`).catch(() => null)
+    // Verificar que el backend esté disponible con timeout
+    console.log('🔍 Verificando backend...')
+    const healthCheck = await Promise.race([
+      fetch(`${BACKEND_URL}/health`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+    ]).catch((error) => {
+      console.error('❌ Health check falló:', error.message)
+      throw new Error('Backend no disponible. Asegúrate de que el servidor esté corriendo en ' + BACKEND_URL)
+    })
     
     if (!healthCheck || !healthCheck.ok) {
-      console.warn('⚠️ Backend no disponible, usando análisis simulado')
-      return simulatedAnalysis(file)
+      throw new Error('Backend no responde correctamente')
     }
     
     console.log('✅ Backend disponible')
@@ -30,32 +36,44 @@ export async function analyzeTemplate(file, skipCache = false) {
     const formData = new FormData()
     formData.append('file', file)
     
-    console.log('📤 Enviando archivo al backend...')
+    console.log('📤 Enviando archivo al backend para análisis REAL...')
+    console.log('📄 Archivo:', file.name, 'Tamaño:', file.size, 'bytes')
     
-    // Llamar al backend Python
-    const response = await fetch(`${BACKEND_URL}/api/analyze`, {
-      method: 'POST',
-      body: formData
-    })
+    // Llamar al backend Python con timeout de 60 segundos (análisis puede tardar)
+    const response = await Promise.race([
+      fetch(`${BACKEND_URL}/api/analyze`, {
+        method: 'POST',
+        body: formData
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout al analizar (60s)')), 60000))
+    ])
     
-    console.log('📥 Respuesta del backend:', response.status)
+    console.log('📥 Respuesta del backend:', response.status, response.statusText)
     
     if (!response.ok) {
       const errorText = await response.text()
       console.error('❌ Error del servidor:', errorText)
-      throw new Error(`Error del servidor: ${response.status}`)
+      throw new Error(`Error del servidor: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
-    console.log('📊 Datos recibidos:', data)
+    console.log('📊 Datos recibidos del backend:', {
+      success: data.success,
+      slideCount: data.analysis?.slides?.length,
+      hasImages: !!data.analysis?.slideImages
+    })
     
     if (!data.success) {
-      throw new Error('Error al analizar la presentación')
+      throw new Error('Error al analizar la presentación: ' + (data.error || 'Unknown error'))
     }
     
     // Transformar la respuesta del backend al formato esperado por el frontend
     const transformed = transformAnalysisToFrontend(data.analysis)
-    console.log('✅ Análisis transformado:', transformed)
+    console.log('✅ Análisis transformado:', {
+      slideCount: transformed.slides.length,
+      firstSlideType: transformed.slides[0]?.type,
+      hasTextAreas: transformed.slides[0]?.textAreas?.length > 0
+    })
     
     // Guardar en cache para próximas veces
     await cacheAnalysis(file, transformed)
@@ -65,9 +83,8 @@ export async function analyzeTemplate(file, skipCache = false) {
   } catch (error) {
     console.error('❌ Error analyzing template:', error)
     
-    // Fallback: análisis simulado si el backend no está disponible
-    console.warn('⚠️ Usando análisis simulado como fallback')
-    return simulatedAnalysis(file)
+    // NO usar fallback simulado - mostrar error al usuario
+    throw new Error(`No se pudo analizar el template: ${error.message}. El backend debe estar corriendo para análisis real.`)
   }
 }
 
@@ -116,6 +133,8 @@ function transformAnalysisToFrontend(backendAnalysis) {
 }
 
 function simulatedAnalysis(file) {
+  console.log('🎭 Generando análisis simulado para:', file.name)
+  
   // Análisis simulado como fallback
   const slideCount = Math.floor(Math.random() * 3) + 3
   const slides = []
@@ -123,29 +142,41 @@ function simulatedAnalysis(file) {
   slides.push({
     number: 1,
     type: 'title',
-    textAreas: [
-      { id: 'title', type: 'title', x: 100, y: 150, width: 800, height: 100 },
-      { id: 'subtitle', type: 'subtitle', x: 100, y: 280, width: 800, height: 60 }
-    ],
-    imageAreas: []
+    preview: null,
+    layout: {
+      textAreas: [
+        { id: 'title', type: 'title', x: 100, y: 150, width: 800, height: 100, maxChars: 60 },
+        { id: 'subtitle', type: 'subtitle', x: 100, y: 280, width: 800, height: 60, maxChars: 100 }
+      ],
+      imageAreas: []
+    }
   })
   
   for (let i = 2; i <= slideCount; i++) {
     slides.push({
       number: i,
       type: 'content',
-      textAreas: [
-        { id: 'heading', type: 'heading', x: 100, y: 80, width: 800, height: 60 },
-        { id: 'bullets', type: 'bullets', x: 100, y: 180, width: 800, height: 300 }
-      ],
-      imageAreas: i % 2 === 0 ? [
-        { id: 'image1', x: 600, y: 180, width: 350, height: 300 }
-      ] : []
+      preview: null,
+      layout: {
+        textAreas: [
+          { id: 'heading', type: 'heading', x: 100, y: 80, width: 800, height: 60, maxChars: 50 },
+          { id: 'bullets', type: 'bullets', x: 100, y: 180, width: 800, height: 300, maxChars: 500 }
+        ],
+        imageAreas: i % 2 === 0 ? [
+          { id: 'image1', x: 600, y: 180, width: 350, height: 300 }
+        ] : []
+      }
     })
   }
   
+  console.log('✅ Análisis simulado generado:', slides.length, 'slides')
+  
   return {
     fileName: file.name,
+    slideSize: {
+      width: 960,
+      height: 540
+    },
     slides: slides
   }
 }

@@ -76,7 +76,14 @@ def generate_with_xml_cloner(original_path: str, ai_content: Dict) -> str:
         for idx, slide_data in enumerate(ai_content['slides']):
             slide_content = slide_data.get('content', {})
             content_by_slide.append(slide_content)
-            print(f"   📝 Slide {idx+1} contenido: {list(slide_content.keys())}")
+            print(f"   📝 Slide {idx+1} contenido:")
+            print(f"      - title: {slide_content.get('title', 'N/A')[:50]}")
+            print(f"      - subtitle: {slide_content.get('subtitle', 'N/A')[:50]}")
+            print(f"      - heading: {slide_content.get('heading', 'N/A')[:50]}")
+            print(f"      - bullets: {len(slide_content.get('bullets', []))} items")
+            if slide_content.get('bullets'):
+                for i, bullet in enumerate(slide_content.get('bullets', [])[:3]):
+                    print(f"        • {bullet[:50]}")
     
     print(f"   📊 Total slides con contenido: {len(content_by_slide)}")
     

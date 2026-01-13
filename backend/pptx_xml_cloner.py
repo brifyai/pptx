@@ -324,7 +324,16 @@ class PPTXXMLCloner:
         return None
     
     def _detect_text_type(self, shape) -> str:
-        """Detecta el tipo de texto basándose en el placeholder type"""
+        """
+        Detecta el tipo de texto basándose en múltiples heurísticas:
+        1. Placeholder type (más confiable)
+        2. Posición en el slide (título arriba, cuerpo abajo)
+        3. Tamaño de fuente (títulos más grandes)
+        4. Contenido del texto (palabras clave)
+        
+        MEJORADO: Heurísticas más permisivas para templates personalizados
+        """
+        # Método 1: Placeholder type (más confiable)
         nvSpPr = shape.find('.//p:nvSpPr', NAMESPACES)
         if nvSpPr is not None:
             nvPr = nvSpPr.find('.//p:nvPr', NAMESPACES)
@@ -333,11 +342,56 @@ class PPTXXMLCloner:
                 if ph is not None:
                     ph_type = ph.get('type', '')
                     if ph_type in ['title', 'ctrTitle']:
+                        logger.debug(f"         Tipo detectado por placeholder: title")
                         return 'title'
                     elif ph_type in ['subTitle']:
+                        logger.debug(f"         Tipo detectado por placeholder: subtitle")
                         return 'subtitle'
                     elif ph_type in ['body']:
+                        logger.debug(f"         Tipo detectado por placeholder: body")
                         return 'body'
+        
+        # Método 2: Analizar posición y tamaño de fuente
+        try:
+            # Obtener posición del shape
+            spPr = shape.find('.//p:spPr', NAMESPACES)
+            if spPr is not None:
+                xfrm = spPr.find('.//a:xfrm', NAMESPACES)
+                if xfrm is not None:
+                    off = xfrm.find('.//a:off', NAMESPACES)
+                    if off is not None:
+                        y_pos = int(off.get('y', '0'))
+                        
+                        # MEJORADO: Más permisivo con la posición
+                        # Si está en la mitad superior del slide, probablemente es título
+                        if y_pos < 3500000:  # ~3.8 pulgadas desde arriba (mitad del slide)
+                            logger.debug(f"         Tipo detectado por posición: title (y={y_pos})")
+                            return 'title'
+            
+            # Método 3: Analizar tamaño de fuente
+            txBody = shape.find('.//p:txBody', NAMESPACES)
+            if txBody is not None:
+                para = txBody.find('.//a:p', NAMESPACES)
+                if para is not None:
+                    run = para.find('.//a:r', NAMESPACES)
+                    if run is not None:
+                        rPr = run.find('.//a:rPr', NAMESPACES)
+                        if rPr is not None:
+                            font_size = rPr.get('sz')
+                            if font_size:
+                                size_pt = int(font_size) / 100  # EMUs to points
+                                # MEJORADO: Umbrales más bajos
+                                if size_pt > 24:  # Fuentes > 24pt = título
+                                    logger.debug(f"         Tipo detectado por tamaño fuente: title ({size_pt}pt)")
+                                    return 'title'
+                                elif size_pt > 18:  # Fuentes > 18pt = subtitle
+                                    logger.debug(f"         Tipo detectado por tamaño fuente: subtitle ({size_pt}pt)")
+                                    return 'subtitle'
+        except Exception as e:
+            logger.debug(f"         Error detectando tipo por heurística: {e}")
+        
+        # Por defecto, asumir body
+        logger.debug(f"         Tipo por defecto: body")
         return 'body'
     
     def _build_xpath(self, shape, para_idx: int, run_idx: int) -> str:
@@ -553,11 +607,16 @@ class PPTXXMLCloner:
                        slide_texts: List[TextLocation]) -> int:
         """
         Reemplazo inteligente basado en tipo de texto y posición.
+        
+        MEJORADO: Si no hay coincidencias por tipo, usa modo de respaldo
+        que reemplaza todo el texto en orden.
         """
         replacements = 0
         
         # Buscar todos los shapes
         shapes = root.findall('.//p:sp', NAMESPACES)
+        
+        logger.info(f"   🔍 Encontrados {len(shapes)} shapes en el slide")
         
         # Separar contenido por tipo
         title_content = content.get('title') or content.get('heading')
@@ -565,56 +624,128 @@ class PPTXXMLCloner:
         bullets_content = content.get('bullets', [])
         body_content = content.get('body')
         
+        logger.info(f"   📝 Contenido disponible:")
+        logger.info(f"      - title: {title_content[:50] if title_content else 'N/A'}")
+        logger.info(f"      - subtitle: {subtitle_content[:50] if subtitle_content else 'N/A'}")
+        logger.info(f"      - bullets: {len(bullets_content)} items")
+        logger.info(f"      - body: {body_content[:50] if body_content else 'N/A'}")
+        
         bullet_idx = 0
         
-        for shape in shapes:
+        # Flags para rastrear si ya usamos cada tipo de contenido
+        title_used = False
+        subtitle_used = False
+        
+        for shape_idx, shape in enumerate(shapes):
             text_type = self._detect_text_type(shape)
+            shape_id = self._get_shape_id(shape)
             txBody = shape.find('.//p:txBody', NAMESPACES)
             
+            logger.info(f"   📦 Shape {shape_idx+1} (ID: {shape_id}): tipo detectado = '{text_type}'")
+            
             if txBody is None:
+                logger.info(f"      ⚠️ Shape sin txBody, saltando")
                 continue
             
             paragraphs = txBody.findall('.//a:p', NAMESPACES)
+            logger.info(f"      📄 {len(paragraphs)} párrafos encontrados")
             
             for para_idx, para in enumerate(paragraphs):
                 runs = para.findall('.//a:r', NAMESPACES)
+                logger.info(f"         Párrafo {para_idx+1}: {len(runs)} runs")
                 
-                for run in runs:
+                for run_idx, run in enumerate(runs):
                     text_elem = run.find('.//a:t', NAMESPACES)
                     if text_elem is None:
                         continue
                     
                     original_text = text_elem.text or ''
+                    logger.info(f"            Run {run_idx+1}: '{original_text[:50]}'")
                     new_text = None
                     
-                    # Decidir qué contenido usar basándose en el tipo
-                    if text_type == 'title' and title_content:
-                        if self._should_replace(original_text, 'title'):
-                            new_text = title_content
-                            title_content = None  # Usar solo una vez
+                    # Intentar mapeo por tipo
+                    if text_type == 'title' and title_content and not title_used:
+                        new_text = title_content
+                        title_used = True
+                        logger.info(f"      ✅ Reemplazando TITLE: '{original_text[:30]}...' -> '{new_text[:30]}...'")
                     
-                    elif text_type == 'subtitle' and subtitle_content:
-                        if self._should_replace(original_text, 'subtitle'):
-                            new_text = subtitle_content
-                            subtitle_content = None
+                    elif text_type == 'subtitle' and subtitle_content and not subtitle_used:
+                        new_text = subtitle_content
+                        subtitle_used = True
+                        logger.info(f"      ✅ Reemplazando SUBTITLE: '{original_text[:30]}...' -> '{new_text[:30]}...'")
                     
                     elif text_type == 'body':
                         # Para body, usar bullets o body content
                         if bullets_content and bullet_idx < len(bullets_content):
-                            if self._should_replace(original_text, 'bullet'):
-                                new_text = bullets_content[bullet_idx]
-                                bullet_idx += 1
+                            new_text = bullets_content[bullet_idx]
+                            bullet_idx += 1
+                            logger.info(f"      ✅ Reemplazando BULLET {bullet_idx}: '{original_text[:30]}...' -> '{new_text[:30]}...'")
                         elif body_content:
-                            if self._should_replace(original_text, 'body'):
-                                new_text = body_content
-                                body_content = None
+                            new_text = body_content
+                            body_content = None
+                            logger.info(f"      ✅ Reemplazando BODY: '{original_text[:30]}...' -> '{new_text[:30]}...'")
+                    else:
+                        logger.info(f"            ⏭️ No hay contenido para tipo '{text_type}' o ya fue usado")
                     
                     # Aplicar reemplazo
                     if new_text is not None:
                         text_elem.text = new_text
                         replacements += 1
-                        logger.debug(f"      Reemplazado: '{original_text[:30]}...' -> '{new_text[:30]}...'")
         
+        logger.info(f"   📊 Total de reemplazos: {replacements}")
+        
+        # MODO DE RESPALDO: Si no hubo reemplazos, intentar modo forzado
+        if replacements == 0 and (title_content or bullets_content or body_content):
+            logger.warning(f"   ⚠️ No hubo reemplazos por tipo, activando MODO DE RESPALDO")
+            replacements = self._fallback_replace(root, content)
+        
+        return replacements
+    
+    def _fallback_replace(self, root, content: Dict[str, Any]) -> int:
+        """
+        Modo de respaldo: Reemplaza TODO el texto encontrado en orden,
+        sin importar los tipos. Útil para templates muy personalizados.
+        """
+        logger.info(f"   🔄 MODO DE RESPALDO ACTIVADO")
+        
+        # Crear lista de todo el contenido disponible en orden
+        all_content = []
+        if content.get('title'):
+            all_content.append(content['title'])
+        if content.get('subtitle'):
+            all_content.append(content['subtitle'])
+        if content.get('heading'):
+            all_content.append(content['heading'])
+        if content.get('bullets'):
+            all_content.extend(content['bullets'])
+        if content.get('body'):
+            all_content.append(content['body'])
+        
+        logger.info(f"   📝 Contenido total disponible: {len(all_content)} items")
+        
+        replacements = 0
+        content_idx = 0
+        shapes = root.findall('.//p:sp', NAMESPACES)
+        
+        for shape in shapes:
+            txBody = shape.find('.//p:txBody', NAMESPACES)
+            if txBody is None:
+                continue
+            
+            paragraphs = txBody.findall('.//a:p', NAMESPACES)
+            for para in paragraphs:
+                runs = para.findall('.//a:r', NAMESPACES)
+                for run in runs:
+                    text_elem = run.find('.//a:t', NAMESPACES)
+                    if text_elem is not None and content_idx < len(all_content):
+                        original = text_elem.text or ''
+                        new_text = all_content[content_idx]
+                        text_elem.text = new_text
+                        content_idx += 1
+                        replacements += 1
+                        logger.info(f"      🔄 Reemplazo {replacements}: '{original[:30]}...' -> '{new_text[:30]}...'")
+        
+        logger.info(f"   📊 Total de reemplazos (modo respaldo): {replacements}")
         return replacements
     
     def _should_replace(self, original_text: str, expected_type: str) -> bool:

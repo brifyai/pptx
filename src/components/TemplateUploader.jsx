@@ -7,15 +7,28 @@ function TemplateUploader({ onUpload }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [showCacheInfo, setShowCacheInfo] = useState(false)
 
+  // Tipos de archivo aceptados
+  const acceptedTypes = ['.pptx', '.pdf']
+  const acceptedMimeTypes = [
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/pdf'
+  ]
+
+  const isValidFile = (file) => {
+    const fileName = file.name.toLowerCase()
+    return acceptedTypes.some(ext => fileName.endsWith(ext)) || 
+           acceptedMimeTypes.some(mime => file.type === mime)
+  }
+
   const handleDrop = async (e) => {
     e.preventDefault()
     setDragOver(false)
     
     const file = e.dataTransfer.files[0]
-    if (file && (file.type.includes('presentation') || file.name.endsWith('.pptx'))) {
+    if (file && isValidFile(file)) {
       await processFile(file)
     } else {
-      alert('Por favor sube un archivo PowerPoint (.pptx)')
+      alert('Por favor sube un archivo PowerPoint (.pptx) o PDF (.pdf)')
     }
   }
 
@@ -29,14 +42,35 @@ function TemplateUploader({ onUpload }) {
   const processFile = async (file, skipCache = false) => {
     console.log('📄 Procesando archivo:', file.name)
     setAnalyzing(true)
+    
+    // Timeout de 60 segundos
+    const timeoutId = setTimeout(() => {
+      setAnalyzing(false)
+      alert('⏱️ El análisis está tomando demasiado tiempo.\n\nPosibles causas:\n- El backend no está corriendo\n- El archivo es muy grande\n- Hay un error en el servidor\n\nRevisa la consola del navegador (F12) para más detalles.')
+    }, 60000)
+    
     try {
       console.log('🔍 Analizando plantilla...')
       const analysis = await analyzeTemplate(file, skipCache)
+      clearTimeout(timeoutId)
       console.log('✅ Análisis completado:', analysis)
+      
+      // Verificar que el análisis tenga la estructura correcta
+      if (!analysis || !analysis.slides || analysis.slides.length === 0) {
+        throw new Error('El análisis no devolvió slides válidos')
+      }
+      
       onUpload(file, analysis)
     } catch (error) {
+      clearTimeout(timeoutId)
       console.error('❌ Error al analizar:', error)
-      alert(`Error al analizar el archivo: ${error.message}`)
+      
+      let errorMsg = error.message
+      if (error.message.includes('fetch')) {
+        errorMsg = 'No se pudo conectar al backend. Verifica que esté corriendo en http://localhost:8000'
+      }
+      
+      alert(`Error al analizar el archivo: ${errorMsg}\n\nIntenta de nuevo o verifica que el backend esté corriendo.`)
     } finally {
       setAnalyzing(false)
     }
@@ -71,12 +105,12 @@ function TemplateUploader({ onUpload }) {
       <div className="upload-icon">
         <span className="material-icons">cloud_upload</span>
       </div>
-      <h3>Sube tu plantilla de PowerPoint</h3>
-      <p>Arrastra tu archivo .pptx aquí o haz clic para seleccionar</p>
+      <h3>Sube tu plantilla</h3>
+      <p>Arrastra tu archivo .pptx o .pdf aquí o haz clic para seleccionar</p>
       
       <input 
         type="file" 
-        accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        accept=".pptx,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
         onChange={handleFileInput}
         style={{ display: 'none' }}
         id="file-input"
@@ -87,6 +121,15 @@ function TemplateUploader({ onUpload }) {
           Seleccionar Archivo
         </button>
       </label>
+      
+      <div className="supported-formats">
+        <span className="format-badge pptx">
+          <span className="material-icons">slideshow</span> PPTX
+        </span>
+        <span className="format-badge pdf">
+          <span className="material-icons">picture_as_pdf</span> PDF
+        </span>
+      </div>
       
       {/* Indicador de cache */}
       {cacheStats.count > 0 && (

@@ -307,6 +307,18 @@ async def export_pptx(request: Request):
             slides_data = json.loads(data) if isinstance(data, str) else data
             slides = slides_data.get('slides', [])
             logger.info(f"📤 Slides parseados: {len(slides)}")
+            
+            # DEBUG: Mostrar contenido de cada slide
+            for idx, slide in enumerate(slides):
+                content = slide.get('content', {})
+                logger.info(f"📤 Slide {idx+1} contenido:")
+                logger.info(f"   - title: {content.get('title', 'N/A')}")
+                logger.info(f"   - subtitle: {content.get('subtitle', 'N/A')}")
+                logger.info(f"   - heading: {content.get('heading', 'N/A')}")
+                logger.info(f"   - bullets: {len(content.get('bullets', []))} items")
+                if content.get('bullets'):
+                    for i, bullet in enumerate(content.get('bullets', [])[:3]):
+                        logger.info(f"     • {bullet}")
         
         # Si hay template, usar clonación completa
         if template_content and template_filename:

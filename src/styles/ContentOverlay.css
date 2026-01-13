@@ -16,40 +16,38 @@
   padding: 8px;
   box-sizing: border-box;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.5);  /* Más transparente */
-  border: 1px solid rgba(0, 0, 0, 0.05);  /* Borde más sutil */
+  background: transparent;  /* Sin fondo */
+  border: 1px dashed transparent;  /* Borde invisible por defecto */
   border-radius: 4px;
   transition: all 0.2s ease;
-  opacity: 0.7;  /* Más transparente por defecto */
 }
 
 .content-overlay-area:hover {
-  background: rgba(255, 255, 255, 0.85);  /* Más visible al hover */
-  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.1);  /* Fondo muy sutil al hover para indicar área editable */
+  border-color: rgba(255, 255, 255, 0.3);  /* Borde visible al hover */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 11;
-  opacity: 1;  /* Completamente visible al hover */
 }
 
 .content-overlay-area--title {
-  background: rgba(52, 152, 219, 0.15);
-  border-color: rgba(52, 152, 219, 0.3);
+  background: transparent;
+  border-color: transparent;
 }
 
 .content-overlay-area--subtitle {
-  background: rgba(155, 89, 182, 0.15);
-  border-color: rgba(155, 89, 182, 0.3);
+  background: transparent;
+  border-color: transparent;
 }
 
 .content-overlay-area--heading {
-  background: rgba(46, 204, 113, 0.15);
-  border-color: rgba(46, 204, 113, 0.3);
+  background: transparent;
+  border-color: transparent;
 }
 
 .content-overlay-area--bullets,
 .content-overlay-area--body {
-  background: rgba(241, 196, 15, 0.15);
-  border-color: rgba(241, 196, 15, 0.3);
+  background: transparent;
+  border-color: transparent;
   align-items: flex-start;
   justify-content: flex-start;
 }
@@ -61,8 +59,9 @@
   text-overflow: ellipsis;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: #2c3e50;
+  color: inherit;  /* Heredar color del slide */
   line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);  /* Sombra sutil para legibilidad */
 }
 
 /* Fallback layout cuando no hay textAreas */

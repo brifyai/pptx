@@ -121,11 +121,20 @@ function ThumbnailItem({
   )
 }
 
-function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity, onSlideOptionsOpen }) {
+function SlideViewer({ slides = [], currentSlide = 0, onSlideChange, onSlideUpdate, extractedAssets, onSlideReorder, onSlideDuplicate, onSlideDelete, onSlideRename, onSlideAdd, logActivity, onSlideOptionsOpen }) {
+  // DEBUG: Log de props recibidas
+  console.log('🔍 SlideViewer render:', { 
+    slidesLength: slides?.length, 
+    currentSlide, 
+    slidesIsArray: Array.isArray(slides),
+    firstSlideHasContent: slides?.[0]?.content !== undefined
+  })
+
+  // IMPORTANTE: Todos los hooks DEBEN ir primero, antes de cualquier return condicional
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
   const isMobile = useMobile(768)
-  const [showExtractedAssets, setShowExtractedAssets] = useState(false) // Deshabilitado por defecto
+  const [showExtractedAssets, setShowExtractedAssets] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const [editingSlideId, setEditingSlideId] = useState(null)
   const [slideNameInput, setSlideNameInput] = useState('')
@@ -144,8 +153,61 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
     return () => window.removeEventListener('keydown', handleEscape)
   }, [contextMenu])
 
+  // VALIDACIÓN CRÍTICA: Si no hay slides, mostrar mensaje (DESPUÉS de los hooks)
+  if (!slides || slides.length === 0) {
+    console.log('🔍 SlideViewer: No hay slides, mostrando mensaje vacío')
+    return (
+      <div className="slide-viewer">
+        <div className="no-slides-message" style={{ padding: '20px', textAlign: 'center' }}>
+          <span className="material-icons" style={{ fontSize: '48px', color: '#9ca3af' }}>slideshow</span>
+          <p style={{ color: '#6b7280' }}>No hay láminas disponibles</p>
+        </div>
+      </div>
+    )
+  }
+
+  // VALIDACIÓN CRÍTICA: Asegurar que currentSlide esté en rango
+  const safeCurrentSlide = Math.max(0, Math.min(currentSlide, slides.length - 1))
+  
+  // Log si hay discrepancia
+  if (safeCurrentSlide !== currentSlide) {
+    console.warn(`⚠️ SlideViewer: currentSlide (${currentSlide}) fuera de rango. Usando ${safeCurrentSlide}`)
+  }
+
+  // Verificar que el slide actual tenga content
+  const currentSlideData = slides[safeCurrentSlide]
+  
+  // Validar que existe el slide actual
+  if (!currentSlideData) {
+    console.warn(`⚠️ Slide ${safeCurrentSlide} no existe. Total slides: ${slides.length}`)
+    return (
+      <div className="slide-viewer">
+        <div className="no-slides-message" style={{ padding: '20px', textAlign: 'center' }}>
+          <span className="material-icons" style={{ fontSize: '48px', color: '#e53e3e' }}>error_outline</span>
+          <p style={{ color: '#c53030' }}>Error: Slide no encontrado</p>
+        </div>
+      </div>
+    )
+  }
+  
+  // Asegurar que content existe
+  if (!currentSlideData.content) {
+    console.warn(`⚠️ Slide ${safeCurrentSlide} no tiene content. Usando valores por defecto.`)
+    currentSlideData.content = { title: '', subtitle: '', heading: '', bullets: [], assets: [] }
+  }
+
+  console.log('🔍 SlideViewer currentSlideData:', { 
+    exists: !!currentSlideData, 
+    hasContent: !!currentSlideData?.content,
+    contentKeys: currentSlideData?.content ? Object.keys(currentSlideData.content) : []
+  })
+
   const handleTextEdit = (field, value) => {
-    const slide = slides[currentSlide]
+    const slide = slides[safeCurrentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede editar: slide ${safeCurrentSlide} no existe o no tiene content`)
+      return
+    }
     const newContent = { ...slide.content, [field]: value }
     onSlideUpdate(slide.id, newContent)
   }
@@ -232,7 +294,11 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
   }
 
   const handleRemoveAsset = (assetIndex) => {
-    const slide = slides[currentSlide]
+    const slide = slides[safeCurrentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede remover asset: slide ${safeCurrentSlide} no existe o no tiene content`)
+      return
+    }
     const newAssets = [...(slide.content.assets || [])]
     newAssets.splice(assetIndex, 1)
     onSlideUpdate(slide.id, { ...slide.content, assets: newAssets })
@@ -240,34 +306,40 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
   }
 
   const handleAssetPositionChange = (assetIndex, position) => {
-    const slide = slides[currentSlide]
+    const slide = slides[safeCurrentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede cambiar posición: slide ${safeCurrentSlide} no existe o no tiene content`)
+      return
+    }
     const newAssets = [...(slide.content.assets || [])]
     newAssets[assetIndex] = { ...newAssets[assetIndex], position }
     onSlideUpdate(slide.id, { ...slide.content, assets: newAssets })
   }
 
   const handleChartDataUpdate = (assetIndex, newData) => {
-    const slide = slides[currentSlide]
+    const slide = slides[safeCurrentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede actualizar chart: slide ${safeCurrentSlide} no existe o no tiene content`)
+      return
+    }
     const newAssets = [...(slide.content.assets || [])]
     newAssets[assetIndex] = { ...newAssets[assetIndex], customData: newData }
     onSlideUpdate(slide.id, { ...slide.content, assets: newAssets })
     setEditingChart(null)
   }
 
-  const currentSlideData = slides[currentSlide]
+  // Ya tenemos currentSlideData definido arriba, solo necesitamos assets
   const assets = currentSlideData.content?.assets || []
   
   // Obtener assets extraídos para el slide actual
-  // MOSTRAR TODAS LAS IMÁGENES como overlay para que se vean correctamente
-  // Esto incluye logos animados que LibreOffice no captura en el preview
   const currentSlideExtractedAssets = extractedAssets ? [
-    ...(extractedAssets.logos || []).filter(a => a.slideNumber === currentSlide + 1),
-    ...(extractedAssets.transparentImages || []).filter(a => a.slideNumber === currentSlide + 1),
-    ...(extractedAssets.animatedElements || []).filter(a => a.slideNumber === currentSlide + 1),
-    ...(extractedAssets.images || []).filter(a => a.slideNumber === currentSlide + 1)
+    ...(extractedAssets.logos || []).filter(a => a.slideNumber === safeCurrentSlide + 1),
+    ...(extractedAssets.transparentImages || []).filter(a => a.slideNumber === safeCurrentSlide + 1),
+    ...(extractedAssets.animatedElements || []).filter(a => a.slideNumber === safeCurrentSlide + 1),
+    ...(extractedAssets.images || []).filter(a => a.slideNumber === safeCurrentSlide + 1)
   ] : []
   
-  console.log(`📦 Assets para slide ${currentSlide + 1}:`, currentSlideExtractedAssets.length)
+  console.log(`📦 Assets para slide ${safeCurrentSlide + 1}:`, currentSlideExtractedAssets.length)
 
   return (
     <div className="slide-viewer">
@@ -369,7 +441,7 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
             <div className="slide-preview-container">
               <img 
                 src={currentSlideData.preview} 
-                alt={`Slide ${currentSlide + 1}`}
+                alt={`Slide ${safeCurrentSlide + 1}`}
                 className="slide-preview-image"
               />
               
@@ -418,14 +490,14 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
                   <input
                     type="text"
                     className="slide-title editable"
-                    value={currentSlideData.content.title}
+                    value={currentSlideData.content?.title || ''}
                     onChange={(e) => handleTextEdit('title', e.target.value)}
                     placeholder="Título principal"
                   />
                   <input
                     type="text"
                     className="slide-subtitle editable"
-                    value={currentSlideData.content.subtitle}
+                    value={currentSlideData.content?.subtitle || ''}
                     onChange={(e) => handleTextEdit('subtitle', e.target.value)}
                     placeholder="Subtítulo"
                   />
@@ -435,12 +507,12 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
                   <input
                     type="text"
                     className="slide-heading editable"
-                    value={currentSlideData.content.heading}
+                    value={currentSlideData.content?.heading || ''}
                     onChange={(e) => handleTextEdit('heading', e.target.value)}
                     placeholder="Título de la diapositiva"
                   />
                   <div className="slide-bullets">
-                    {currentSlideData.content.bullets.map((bullet, index) => (
+                    {(currentSlideData.content?.bullets || []).map((bullet, index) => (
                       <div key={index} className="bullet-item">
                         <span className="bullet-dot">•</span>
                         <input
@@ -448,7 +520,7 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
                           className="bullet-text editable"
                           value={bullet}
                           onChange={(e) => {
-                            const newBullets = [...currentSlideData.content.bullets]
+                            const newBullets = [...(currentSlideData.content?.bullets || [])]
                             newBullets[index] = e.target.value
                             handleTextEdit('bullets', newBullets)
                           }}
@@ -481,8 +553,8 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
         <div className="slide-controls">
           <button
             className="nav-btn"
-            onClick={() => onSlideChange(Math.max(0, currentSlide - 1))}
-            disabled={currentSlide === 0}
+            onClick={() => onSlideChange(Math.max(0, safeCurrentSlide - 1))}
+            disabled={safeCurrentSlide === 0}
           >
             <span className="material-icons">chevron_left</span>
             Anterior
@@ -505,12 +577,12 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
           
           <span className="slide-indicator">
             <span className="material-icons">filter_none</span>
-            {currentSlide + 1} / {slides.length}
+            {safeCurrentSlide + 1} / {slides.length}
           </span>
           <button
             className="nav-btn"
-            onClick={() => onSlideChange(Math.min(slides.length - 1, currentSlide + 1))}
-            disabled={currentSlide === slides.length - 1}
+            onClick={() => onSlideChange(Math.min(slides.length - 1, safeCurrentSlide + 1))}
+            disabled={safeCurrentSlide === slides.length - 1}
           >
             Siguiente
             <span className="material-icons">chevron_right</span>
@@ -524,7 +596,12 @@ function SlideViewer({ slides, currentSlide, onSlideChange, onSlideUpdate, extra
           <ChartEditor
             asset={assets[editingChart]}
             onSave={(data) => {
-              const slide = slides[currentSlide]
+              const slide = slides[safeCurrentSlide]
+              if (!slide || !slide.content) {
+                console.warn(`⚠️ No se puede guardar chart: slide ${safeCurrentSlide} no existe o no tiene content`)
+                setEditingChart(null)
+                return
+              }
               const newAssets = [...(slide.content.assets || [])]
               newAssets[editingChart] = { 
                 ...newAssets[editingChart], 
@@ -735,8 +812,11 @@ function PreciseContentOverlay({ slide, onTextEdit }) {
   const [showDebugOverlay, setShowDebugOverlay] = useState(false)
   const [contentValidations, setContentValidations] = useState({})
   
+  // Validar que slide y slide.content existan
+  const slideContent = slide?.content || {}
+  
   // Determinar si hay textAreas válidas
-  const hasTextAreas = slide.layout && slide.layout.textAreas && slide.layout.textAreas.length > 0
+  const hasTextAreas = slide?.layout && slide.layout.textAreas && slide.layout.textAreas.length > 0
 
   // Validar contenido cuando cambia (siempre llamar el hook, pero solo ejecutar si hay textAreas)
   useEffect(() => {
@@ -745,11 +825,11 @@ function PreciseContentOverlay({ slide, onTextEdit }) {
     const validations = {}
     slide.layout.textAreas.forEach((area, idx) => {
       if (!area || !area.position) return // Skip invalid areas
-      const content = getContentForArea(area, slide.content)
+      const content = getContentForArea(area, slideContent)
       validations[idx] = validateContentFits(content, area)
     })
     setContentValidations(validations)
-  }, [slide.content, slide.layout?.textAreas, hasTextAreas])
+  }, [slideContent, slide?.layout?.textAreas, hasTextAreas])
 
   // Si no hay layout con textAreas, usar fallback genérico
   if (!hasTextAreas) {
@@ -773,7 +853,7 @@ function PreciseContentOverlay({ slide, onTextEdit }) {
 
       {slide.layout.textAreas.filter(area => area && area.position).map((area, idx) => {
         // Obtener el contenido correspondiente según el tipo de área
-        const content = getContentForArea(area, slide.content)
+        const content = getContentForArea(area, slideContent)
         const isBulletArea = area.type === 'bullets' || area.type === 'body'
         const validation = contentValidations[idx] || { fits: true }
         
@@ -1004,6 +1084,14 @@ function BulletsEditor({ bullets, area, onTextEdit, validation, adjustedFontSize
 
 // Fallback para slides sin análisis de layout
 function FallbackContentOverlay({ slide, onTextEdit }) {
+  // Validar que slide exista
+  if (!slide) {
+    return null
+  }
+  
+  // Usar optional chaining para acceder a content
+  const content = slide.content || {}
+  
   return (
     <div className="content-overlay fallback">
       {slide.type === 'title' ? (
@@ -1011,7 +1099,7 @@ function FallbackContentOverlay({ slide, onTextEdit }) {
           <div className="overlay-title">
             <input
               type="text"
-              value={slide.content?.title || ''}
+              value={content.title || ''}
               onChange={(e) => onTextEdit('title', e.target.value)}
               placeholder="Título principal"
               className="overlay-input title-input"
@@ -1020,7 +1108,7 @@ function FallbackContentOverlay({ slide, onTextEdit }) {
           <div className="overlay-subtitle">
             <input
               type="text"
-              value={slide.content?.subtitle || ''}
+              value={content.subtitle || ''}
               onChange={(e) => onTextEdit('subtitle', e.target.value)}
               placeholder="Subtítulo"
               className="overlay-input subtitle-input"
@@ -1032,21 +1120,21 @@ function FallbackContentOverlay({ slide, onTextEdit }) {
           <div className="overlay-heading">
             <input
               type="text"
-              value={slide.content?.heading || ''}
+              value={content.heading || ''}
               onChange={(e) => onTextEdit('heading', e.target.value)}
               placeholder="Título"
               className="overlay-input heading-input"
             />
           </div>
           <div className="overlay-bullets">
-            {(slide.content?.bullets || ['', '', '']).map((bullet, index) => (
+            {(content.bullets || ['', '', '']).map((bullet, index) => (
               <div key={index} className="overlay-bullet-item">
                 <span className="bullet-marker">•</span>
                 <input
                   type="text"
                   value={bullet || ''}
                   onChange={(e) => {
-                    const newBullets = [...(slide.content?.bullets || ['', '', ''])]
+                    const newBullets = [...(content.bullets || ['', '', ''])]
                     newBullets[index] = e.target.value
                     onTextEdit('bullets', newBullets)
                   }}
@@ -1057,7 +1145,7 @@ function FallbackContentOverlay({ slide, onTextEdit }) {
                   type="button"
                   className="remove-bullet-btn"
                   onClick={() => {
-                    const newBullets = [...(slide.content?.bullets || [])]
+                    const newBullets = [...(content.bullets || [])]
                     newBullets.splice(index, 1)
                     if (newBullets.length === 0) newBullets.push('')
                     onTextEdit('bullets', newBullets)
@@ -1072,7 +1160,7 @@ function FallbackContentOverlay({ slide, onTextEdit }) {
               type="button"
               className="add-bullet-btn"
               onClick={() => {
-                const newBullets = [...(slide.content?.bullets || []), '']
+                const newBullets = [...(content.bullets || []), '']
                 onTextEdit('bullets', newBullets)
               }}
             >

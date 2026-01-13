@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
-import { generateAIResponse, generateFullPresentation, initializePresentationContext } from '../services/aiService'
+import { 
+  generateAIResponse, 
+  generateFullPresentation, 
+  initializePresentationContext,
+  generateContentVariants,
+  suggestContentImprovements,
+  structureTextToSlides,
+  clearConversationHistory,
+  getHistoryStats
+} from '../services/aiService'
 import { containsUrl } from '../services/webSearchService'
 import '../styles/ChatPanel.css'
 
@@ -16,12 +25,17 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [mode, setMode] = useState('chat') // chat, slide, all
+  const [stickyMode, setStickyMode] = useState(false) // Nuevo: modo sticky
   const [showModeSelector, setShowModeSelector] = useState(false)
   const [previewTarget, setPreviewTarget] = useState(null)
   const [showContentMapper, setShowContentMapper] = useState(false)
   const [pendingContent, setPendingContent] = useState(null)
   const [aiStatus, setAiStatus] = useState(null) // null, 'thinking', 'searching', 'analyzing', 'generating'
   const [previewChanges, setPreviewChanges] = useState(null)
+  const [showVariantsModal, setShowVariantsModal] = useState(false) // Nuevo
+  const [variantsData, setVariantsData] = useState(null) // Nuevo
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false) // Nuevo
+  const [suggestionsData, setSuggestionsData] = useState(null) // Nuevo
   const chatEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -101,19 +115,34 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
         console.log('📊 slideUpdates:', aiResponse.slideUpdates)
         
         if (aiResponse.slideUpdates) {
-          console.log('✅ Se recibieron slideUpdates, mostrando preview...')
+          console.log('✅ Se recibieron slideUpdates, aplicando automáticamente...')
           console.log('📦 Cantidad de updates:', aiResponse.slideUpdates.length)
           console.log('📦 Primer update:', aiResponse.slideUpdates[0])
           
-          // Mostrar preview antes de aplicar
-          setPreviewChanges({
-            type: 'all',
-            updates: aiResponse.slideUpdates,
-            message: aiResponse.message
-          })
+          // APLICAR AUTOMÁTICAMENTE sin mostrar preview
+          if (onBatchSlideUpdate) {
+            console.log('✅ Usando onBatchSlideUpdate')
+            onBatchSlideUpdate(aiResponse.slideUpdates)
+          } else {
+            console.log('⚠️ onBatchSlideUpdate no disponible, usando fallback')
+            aiResponse.slideUpdates.forEach((update, idx) => {
+              console.log(`  Aplicando update ${idx}:`, update)
+              const slide = slides[update.slideIndex]
+              if (slide) {
+                const newContent = {
+                  ...slide.content,
+                  ...update.content
+                }
+                console.log(`  Nuevo contenido para slide ${update.slideIndex}:`, newContent)
+                onSlideUpdate(slide.id, newContent)
+              }
+            })
+          }
+          
+          // Enviar mensaje de confirmación
+          aiResponse.message = aiResponse.message + `\n\n✅ ${aiResponse.slideUpdates.length} láminas actualizadas automáticamente`
+          
           setAiStatus(null)
-          setIsTyping(false)
-          return // No enviar mensaje aún, esperar confirmación
         } else {
           console.warn('⚠️ No se recibieron slideUpdates en la respuesta')
         }
@@ -124,25 +153,34 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
         aiResponse = await generateAIResponse(cleanMessage, slides[targetIndex], slides)
         
         if (aiResponse.updates) {
-          // Mostrar preview del cambio
-          setPreviewChanges({
-            type: 'slide',
-            slideIndex: targetIndex,
-            updates: aiResponse.updates,
-            message: aiResponse.message
-          })
+          // APLICAR AUTOMÁTICAMENTE sin mostrar preview
+          const slide = slides[targetIndex]
+          if (slide) {
+            const newContent = {
+              ...slide.content,
+              ...aiResponse.updates
+            }
+            console.log('📝 Aplicando contenido automáticamente al slide:', targetIndex, newContent)
+            onSlideUpdate(slide.id, newContent)
+          }
+          
+          aiResponse.message = aiResponse.message + '\n\n✅ Cambios aplicados automáticamente'
           setAiStatus(null)
-          setIsTyping(false)
-          return // Esperar confirmación
         } else if (aiResponse.slideUpdates) {
-          setPreviewChanges({
-            type: 'multiple',
-            updates: aiResponse.slideUpdates,
-            message: aiResponse.message
-          })
+          // APLICAR AUTOMÁTICAMENTE múltiples slides
+          if (onBatchSlideUpdate) {
+            onBatchSlideUpdate(aiResponse.slideUpdates)
+          } else {
+            aiResponse.slideUpdates.forEach(update => {
+              const slide = slides[update.slideIndex]
+              if (slide) {
+                onSlideUpdate(slide.id, { ...slide.content, ...update.content })
+              }
+            })
+          }
+          
+          aiResponse.message = aiResponse.message + `\n\n✅ ${aiResponse.slideUpdates.length} láminas actualizadas automáticamente`
           setAiStatus(null)
-          setIsTyping(false)
-          return
         }
       } else {
         // Chat normal - pero detectar si debe generar contenido
@@ -155,14 +193,22 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
           aiResponse = await generateFullPresentation(cleanMessage, slides)
           
           if (aiResponse.slideUpdates) {
-            setPreviewChanges({
-              type: 'all',
-              updates: aiResponse.slideUpdates,
-              message: aiResponse.message
-            })
+            // APLICAR AUTOMÁTICAMENTE sin mostrar preview
+            if (onBatchSlideUpdate) {
+              console.log('✅ Usando onBatchSlideUpdate')
+              onBatchSlideUpdate(aiResponse.slideUpdates)
+            } else {
+              console.log('⚠️ onBatchSlideUpdate no disponible, usando fallback')
+              aiResponse.slideUpdates.forEach(update => {
+                const slide = slides[update.slideIndex]
+                if (slide) {
+                  onSlideUpdate(slide.id, { ...slide.content, ...update.content })
+                }
+              })
+            }
+            
+            aiResponse.message = aiResponse.message + `\n\n✅ ${aiResponse.slideUpdates.length} láminas actualizadas automáticamente`
             setAiStatus(null)
-            setIsTyping(false)
-            return
           }
         } else {
           // Detectar si necesita buscar en web
@@ -175,17 +221,20 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
           
           aiResponse = await generateAIResponse(cleanMessage, slides[currentSlide], slides)
           
-          // Si la IA detecta que debería actualizar slides, mostrar preview
+          // Si la IA detecta que debería actualizar slides, aplicar automáticamente
           if (aiResponse.updates) {
-            setPreviewChanges({
-              type: 'slide',
-              slideIndex: currentSlide,
-              updates: aiResponse.updates,
-              message: aiResponse.message
-            })
+            const slide = slides[currentSlide]
+            if (slide) {
+              const newContent = {
+                ...slide.content,
+                ...aiResponse.updates
+              }
+              console.log('📝 Aplicando contenido automáticamente al slide actual:', currentSlide, newContent)
+              onSlideUpdate(slide.id, newContent)
+            }
+            
+            aiResponse.message = aiResponse.message + '\n\n✅ Cambios aplicados automáticamente'
             setAiStatus(null)
-            setIsTyping(false)
-            return
           }
         }
       }
@@ -206,7 +255,10 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
     } finally {
       setIsTyping(false)
       setAiStatus(null)
-      setMode('chat') // Reset a chat después de enviar
+      // Solo resetear modo si no está en modo sticky
+      if (!stickyMode) {
+        setMode('chat')
+      }
     }
   }
 
@@ -220,7 +272,7 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
   }
 
   // Manejar comandos
-  const handleCommand = (cmd) => {
+  const handleCommand = async (cmd) => {
     const { command, args } = cmd
     
     switch (command) {
@@ -243,12 +295,113 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
         }
         break
       
+      case 'variantes':
+      case 'variants':
+        const numVariants = parseInt(args) || 3
+        setIsTyping(true)
+        try {
+          const variants = await generateContentVariants(
+            slides[currentSlide].content,
+            numVariants
+          )
+          setShowVariantsModal(true)
+          setVariantsData(variants)
+          onMessage(`/variantes ${args || '3'}`, 
+            `✅ He generado ${variants.length} variantes del contenido actual. Revisa las opciones.`)
+        } catch (error) {
+          console.error('Error generando variantes:', error)
+          onMessage(`/variantes ${args}`, 
+            '❌ Error generando variantes. Intenta de nuevo.')
+        } finally {
+          setIsTyping(false)
+        }
+        setInput('')
+        return
+      
+      case 'sugerencias':
+      case 'suggestions':
+        setIsTyping(true)
+        try {
+          const suggestions = await suggestContentImprovements(
+            slides[currentSlide].content
+          )
+          setShowSuggestionsModal(true)
+          setSuggestionsData(suggestions)
+          onMessage(`/sugerencias`, 
+            `📊 Análisis completado\n\n` +
+            `Puntuación: ${suggestions.overallScore}/10\n` +
+            `${suggestions.summary}`)
+        } catch (error) {
+          console.error('Error analizando contenido:', error)
+          onMessage(`/sugerencias`, 
+            '❌ Error analizando contenido. Intenta de nuevo.')
+        } finally {
+          setIsTyping(false)
+        }
+        setInput('')
+        return
+      
+      case 'estructurar':
+      case 'structure':
+        if (!args) {
+          onMessage(`/estructurar`, 
+            '⚠️ Uso: /estructurar [texto largo a estructurar]')
+          setInput('')
+          return
+        }
+        setIsTyping(true)
+        try {
+          const structured = await structureTextToSlides(args, slides.length)
+          onMessage(`/estructurar`, 
+            `✅ He estructurado el texto en ${structured.length} slides.`)
+          const updates = structured.map((slide, index) => ({
+            slideIndex: index,
+            content: slide.content
+          }))
+          if (onBatchSlideUpdate) {
+            onBatchSlideUpdate(updates)
+          }
+        } catch (error) {
+          console.error('Error estructurando texto:', error)
+          onMessage(`/estructurar`, 
+            '❌ Error estructurando texto. Intenta de nuevo.')
+        } finally {
+          setIsTyping(false)
+        }
+        setInput('')
+        return
+      
+      case 'limpiar':
+      case 'clear':
+        clearConversationHistory()
+        onMessage(`/limpiar`, 
+          '🗑️ Historial de conversación limpiado. Empezamos de nuevo.')
+        setInput('')
+        return
+      
+      case 'historial':
+      case 'history':
+        const stats = getHistoryStats()
+        onMessage(`/historial`, 
+          `📊 **Estadísticas del historial:**\n\n` +
+          `• Total de mensajes: ${stats.total}\n` +
+          `• Tus mensajes: ${stats.user}\n` +
+          `• Respuestas de IA: ${stats.assistant}\n` +
+          `• Mensajes del sistema: ${stats.system}`)
+        setInput('')
+        return
+      
       case 'ayuda':
       case 'help':
         onMessage(`/${command}`, `**Comandos disponibles:**\n\n` +
           `• **/generar [tema]** - Genera presentación completa\n` +
           `• **/mejorar [instrucción]** - Mejora slide actual\n` +
           `• **/buscar [tema]** - Busca información en web\n` +
+          `• **/variantes [n]** - Genera N variantes del contenido\n` +
+          `• **/sugerencias** - Analiza y sugiere mejoras\n` +
+          `• **/estructurar [texto]** - Estructura texto en slides\n` +
+          `• **/limpiar** - Limpia historial de conversación\n` +
+          `• **/historial** - Muestra estadísticas del historial\n` +
           `• **/ayuda** - Muestra esta ayuda\n\n` +
           `También puedes usar: @slide, @all, @1, @2, etc.`)
         setInput('')
@@ -641,6 +794,21 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
                   {mode === m.id && <span className="material-icons check">check</span>}
                 </button>
               ))}
+              
+              {/* Sticky Mode Toggle */}
+              <div className="mode-sticky-toggle">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={stickyMode}
+                    onChange={(e) => setStickyMode(e.target.checked)}
+                  />
+                  <span>Mantener modo activo</span>
+                  <span className="material-icons info-icon" title="El modo no se reseteará después de enviar mensajes">
+                    info
+                  </span>
+                </label>
+              </div>
             </div>
           )}
         </div>
@@ -823,6 +991,113 @@ function ChatPanel({ chatHistory, currentSlide, slides, onMessage, onSlideUpdate
             }}
           />
         </Suspense>
+      )}
+
+      {/* Variants Modal */}
+      {showVariantsModal && variantsData && (
+        <div className="modal-overlay" onClick={() => setShowVariantsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <span className="material-icons">auto_awesome</span>
+                Variantes Generadas
+              </h3>
+              <button className="close-btn" onClick={() => setShowVariantsModal(false)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              {variantsData.map((variant, index) => (
+                <div key={index} className="variant-option">
+                  <div className="variant-header">
+                    <strong>Variante {index + 1}</strong>
+                    <button
+                      className="btn-small"
+                      onClick={() => {
+                        onSlideUpdate(slides[currentSlide].id, variant)
+                        setShowVariantsModal(false)
+                      }}
+                    >
+                      Usar esta
+                    </button>
+                  </div>
+                  <div className="variant-content">
+                    {variant.title && <p><strong>Título:</strong> {variant.title}</p>}
+                    {variant.subtitle && <p><strong>Subtítulo:</strong> {variant.subtitle}</p>}
+                    {variant.heading && <p><strong>Encabezado:</strong> {variant.heading}</p>}
+                    {variant.bullets && (
+                      <div>
+                        <strong>Puntos:</strong>
+                        <ul>
+                          {variant.bullets.map((bullet, i) => (
+                            <li key={i}>{bullet}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions Modal */}
+      {showSuggestionsModal && suggestionsData && (
+        <div className="modal-overlay" onClick={() => setShowSuggestionsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <span className="material-icons">lightbulb</span>
+                Sugerencias de Mejora
+              </h3>
+              <button className="close-btn" onClick={() => setShowSuggestionsModal(false)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="suggestions-score">
+                <h4>Puntuación: {suggestionsData.overallScore}/10</h4>
+                <p>{suggestionsData.summary}</p>
+              </div>
+              
+              {suggestionsData.titleSuggestions && suggestionsData.titleSuggestions.length > 0 && (
+                <div className="suggestion-section">
+                  <h5>Sugerencias de Título:</h5>
+                  <ul>
+                    {suggestionsData.titleSuggestions.map((title, i) => (
+                      <li key={i}>{title}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {suggestionsData.bulletImprovements && suggestionsData.bulletImprovements.length > 0 && (
+                <div className="suggestion-section">
+                  <h5>Mejoras de Contenido:</h5>
+                  {suggestionsData.bulletImprovements.map((improvement, i) => (
+                    <div key={i} className="improvement-item">
+                      <p><strong>Original:</strong> {improvement.original}</p>
+                      <p><strong>Mejorado:</strong> {improvement.improved}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {suggestionsData.generalTips && suggestionsData.generalTips.length > 0 && (
+                <div className="suggestion-section">
+                  <h5>Consejos Generales:</h5>
+                  <ul>
+                    {suggestionsData.generalTips.map((tip, i) => (
+                      <li key={i}>{tip}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

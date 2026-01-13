@@ -40,7 +40,8 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
         const slideIndex = update.slideIndex
         
         if (slideIndex >= 0 && slideIndex < updatedSlides.length) {
-          const oldContent = updatedSlides[slideIndex].content
+          const slide = updatedSlides[slideIndex]
+          const oldContent = slide?.content || {}
           const newContent = {
             ...oldContent,
             ...update.content
@@ -51,7 +52,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
           console.log(`    Contenido nuevo:`, newContent)
           
           updatedSlides[slideIndex] = {
-            ...updatedSlides[slideIndex],
+            ...slide,
             content: newContent
           }
         } else {
@@ -94,8 +95,6 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
   }, [currentSlide, logActivity])
 
   const handleSlideAdd = useCallback(() => {
-    const newSlideNum = slides.length + 1
-    
     setSlides(prev => {
       const newSlide = {
         id: Date.now(),
@@ -104,22 +103,30 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
         content: getEmptyContent('content'),
         preview: null
       }
-      return [...prev, newSlide].map((slide, index) => ({ ...slide, id: index + 1 }))
+      const newSlides = [...prev, newSlide].map((slide, index) => ({ ...slide, id: index + 1 }))
+      // Navegar al nuevo slide (último índice)
+      setCurrentSlide(newSlides.length - 1)
+      return newSlides
     })
     
-    setCurrentSlide(slides.length)
     showToast?.('Nueva lámina agregada')
-    logActivity?.('add', `Nueva lámina ${newSlideNum} creada`)
-  }, [slides.length, getEmptyContent, showToast, logActivity])
+    logActivity?.('add', `Nueva lámina ${slides.length + 1} creada`)
+  }, [getEmptyContent, showToast, logActivity, slides.length])
 
   const handleSlideDuplicate = useCallback((slideIndex) => {
     setSlides(prev => {
       const slideToDuplicate = prev[slideIndex]
+      if (!slideToDuplicate) {
+        console.warn(`⚠️ No se puede duplicar: slide ${slideIndex} no existe`)
+        return prev
+      }
       const newSlide = {
         ...slideToDuplicate,
         id: Date.now(),
         name: `${slideToDuplicate.name || `Lámina ${slideIndex + 1}`} (copia)`,
-        content: JSON.parse(JSON.stringify(slideToDuplicate.content)),
+        content: slideToDuplicate.content 
+          ? JSON.parse(JSON.stringify(slideToDuplicate.content))
+          : getEmptyContent(slideToDuplicate.type || 'content'),
         preview: slideToDuplicate.preview
       }
       
@@ -134,7 +141,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     setCurrentSlide(slideIndex + 1)
     showToast?.(`Lámina ${slideIndex + 1} duplicada`)
     logActivity?.('duplicate', `Lámina ${slideIndex + 1} duplicada`)
-  }, [showToast, logActivity])
+  }, [showToast, logActivity, getEmptyContent])
 
   const handleSlideDelete = useCallback((slideIndex) => {
     if (slides.length <= 1) {
@@ -145,19 +152,25 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     showDeleteConfirm?.(`Lámina ${slideIndex + 1}`, () => {
       setSlides(prev => {
         const newSlides = prev.filter((_, index) => index !== slideIndex)
-        return newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+        const reindexedSlides = newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+        
+        // Ajustar currentSlide basado en la nueva longitud
+        if (currentSlide >= reindexedSlides.length) {
+          // Si currentSlide está fuera de rango, ir al último slide
+          setCurrentSlide(Math.max(0, reindexedSlides.length - 1))
+        } else if (currentSlide > slideIndex) {
+          // Si estábamos después del slide eliminado, retroceder uno
+          setCurrentSlide(currentSlide - 1)
+        }
+        // Si currentSlide < slideIndex, no hacer nada (mantener posición)
+        
+        return reindexedSlides
       })
-      
-      if (currentSlide >= slides.length - 1) {
-        setCurrentSlide(Math.max(0, currentSlide - 1))
-      } else if (currentSlide > slideIndex) {
-        setCurrentSlide(currentSlide - 1)
-      }
       
       showToast?.(`Lámina ${slideIndex + 1} eliminada`)
       logActivity?.('delete', `Lámina ${slideIndex + 1} eliminada`)
     })
-  }, [slides.length, currentSlide, showWarning, showDeleteConfirm, showToast, logActivity])
+  }, [currentSlide, showWarning, showDeleteConfirm, showToast, logActivity])
 
   const handleSlideRename = useCallback((slideId, newName) => {
     const slideIndex = slides.findIndex(s => s.id === slideId)

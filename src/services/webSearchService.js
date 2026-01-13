@@ -14,6 +14,13 @@ export async function searchWeb(query) {
     if (urlMatch) {
       const url = urlMatch[0]
       console.log('🌐 URL detectada:', url)
+      
+      // Verificar si es red social
+      if (isSocialMediaUrl(url)) {
+        console.log('📱 URL de red social detectada')
+        return await analyzeSocialMedia(url)
+      }
+      
       return await fetchWebsite(url)
     }
     
@@ -23,6 +30,13 @@ export async function searchWeb(query) {
     if (domainMatch) {
       const url = `https://${domainMatch[0]}`
       console.log('🌐 Dominio detectado:', url)
+      
+      // Verificar si es red social
+      if (isSocialMediaUrl(url)) {
+        console.log('📱 URL de red social detectada')
+        return await analyzeSocialMedia(url)
+      }
+      
       return await fetchWebsite(url)
     }
     
@@ -47,32 +61,42 @@ async function fetchWebsite(url) {
   try {
     console.log('📥 Obteniendo contenido de:', url)
     
-    // Intentar múltiples métodos
-    let content = null
+    // Usar el backend para evitar CORS
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
     
-    // Método 1: AllOrigins (más confiable)
     try {
-      content = await fetchViaAllOrigins(url)
-      if (content) {
-        console.log('✅ Contenido obtenido via AllOrigins')
-        return content
+      console.log('🔗 Usando backend para fetch:', `${BACKEND_URL}/api/fetch-url`)
+      const response = await fetch(`${BACKEND_URL}/api/fetch-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('✅ Contenido obtenido via backend')
+        return {
+          url: data.url,
+          title: data.title,
+          description: data.description,
+          content: data.fullText,
+          snippet: data.content,
+          headings: data.headings,
+          keywords: data.keywords
+        }
       }
     } catch (e) {
-      console.warn('⚠️ AllOrigins falló:', e.message)
+      console.warn('⚠️ Backend fetch falló:', e.message)
     }
     
-    // Método 2: CORS Anywhere (backup)
-    try {
-      content = await fetchViaCorsAnywhere(url)
-      if (content) {
-        console.log('✅ Contenido obtenido via CORS Anywhere')
-        return content
-      }
-    } catch (e) {
-      console.warn('⚠️ CORS Anywhere falló:', e.message)
-    }
-    
-    // Si todo falla, retornar información básica
+    // Si el backend falla, retornar información básica
     return {
       url: url,
       title: 'Sitio Web',
@@ -162,21 +186,78 @@ async function fetchViaCorsAnywhere(url) {
 }
 
 /**
- * Realizar búsqueda web (simulada por ahora)
+ * Realizar búsqueda web REAL usando el backend
  */
 async function performWebSearch(query) {
-  console.log('🔎 Búsqueda web:', query)
-  
-  // En producción, aquí usarías una API de búsqueda real
-  // Por ahora, retornamos información general
-  
-  return {
-    query: query,
-    results: [],
-    content: `Búsqueda web para "${query}". Para obtener información específica de un sitio, proporciona la URL completa (ej: https://ejemplo.com)`,
-    snippet: `Búsqueda: ${query}`,
-    isSearch: true
+  try {
+    console.log('🔍 Realizando búsqueda web real:', query)
+    
+    const response = await fetch('http://localhost:8000/api/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: query,
+        num_results: 5
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    console.log('✅ Resultados de búsqueda:', data.count)
+    
+    return {
+      query: data.query,
+      results: data.results,
+      content: formatSearchResultsDetailed(data.results),
+      count: data.count,
+      isSearch: true
+    }
+    
+  } catch (error) {
+    console.error('❌ Error en búsqueda web:', error)
+    
+    // Fallback: mensaje informativo
+    return {
+      query: query,
+      results: [],
+      content: `⚠️ No se pudo realizar la búsqueda web. Verifica que el backend esté corriendo.\n\nPara obtener información específica de un sitio, proporciona la URL completa (ej: https://ejemplo.com)`,
+      snippet: `Búsqueda: ${query}`,
+      isSearch: true,
+      error: true
+    }
   }
+}
+
+function formatSearchResultsDetailed(results) {
+  if (!results || results.length === 0) {
+    return 'No se encontraron resultados.'
+  }
+  
+  let formatted = `
+═══════════════════════════════════════════════════
+RESULTADOS DE BÚSQUEDA WEB (${results.length})
+═══════════════════════════════════════════════════\n\n`
+  
+  results.forEach((result, index) => {
+    formatted += `${index + 1}. ${result.title}\n`
+    formatted += `   URL: ${result.url}\n`
+    formatted += `   ${result.snippet}\n\n`
+    
+    if (result.content && result.content.length > 100) {
+      formatted += `   CONTENIDO:\n`
+      formatted += `   ${result.content.substring(0, 500)}...\n\n`
+    }
+    
+    formatted += `───────────────────────────────────────────────────\n\n`
+  })
+  
+  return formatted
 }
 
 /**
@@ -284,8 +365,13 @@ function extractHeadings(html) {
 export function formatSearchResults(results) {
   if (!results) return ''
   
-  if (results.error) {
+  if (results.error && !results.platform) {
     return `No se pudo acceder a la información web. ${results.message || ''}`
+  }
+  
+  // Contenido de redes sociales
+  if (results.platform) {
+    return results.content
   }
   
   if (results.url) {
@@ -326,4 +412,243 @@ ${results.wordCount ? `Palabras: ${results.wordCount}\n` : ''}
 export function containsUrl(text) {
   const urlPattern = /https?:\/\/[^\s]+|([a-zA-Z0-9-]+\.(com|net|org|io|ai|co|es|mx|cl|ar|pe|uy|ve|bo|ec|py|gt|hn|sv|ni|cr|pa|do|cu|pr)[^\s]*)/i
   return urlPattern.test(text)
+}
+
+/**
+ * Detectar si es URL de red social
+ */
+export function isSocialMediaUrl(url) {
+  const socialPatterns = [
+    /facebook\.com/i,
+    /instagram\.com/i,
+    /tiktok\.com/i,
+    /twitter\.com/i,
+    /x\.com/i,
+    /linkedin\.com/i,
+    /youtube\.com/i,
+    /youtu\.be/i
+  ]
+  
+  return socialPatterns.some(pattern => pattern.test(url))
+}
+
+/**
+ * Analizar URL de red social (limitado)
+ */
+export async function analyzeSocialMedia(url) {
+  console.log('📱 Analizando red social:', url)
+  
+  // Detectar plataforma
+  let platform = 'unknown'
+  if (/facebook\.com/i.test(url)) platform = 'facebook'
+  else if (/instagram\.com/i.test(url)) platform = 'instagram'
+  else if (/tiktok\.com/i.test(url)) platform = 'tiktok'
+  else if (/twitter\.com|x\.com/i.test(url)) platform = 'twitter'
+  else if (/linkedin\.com/i.test(url)) platform = 'linkedin'
+  else if (/youtube\.com|youtu\.be/i.test(url)) platform = 'youtube'
+  
+  // Extraer información básica de la URL
+  const urlInfo = extractSocialUrlInfo(url, platform)
+  
+  return {
+    url: url,
+    platform: platform,
+    ...urlInfo,
+    content: generateSocialMediaGuidance(platform, urlInfo),
+    isLimited: true,
+    requiresManualInput: true
+  }
+}
+
+/**
+ * Extraer información de la URL de red social
+ */
+function extractSocialUrlInfo(url, platform) {
+  const info = {}
+  
+  try {
+    const urlObj = new URL(url)
+    const pathParts = urlObj.pathname.split('/').filter(p => p)
+    
+    switch (platform) {
+      case 'facebook':
+        info.type = pathParts[0] // 'profile', 'page', 'groups', etc.
+        info.username = pathParts[1] || null
+        break
+        
+      case 'instagram':
+        if (pathParts[0] === 'p') {
+          info.type = 'post'
+          info.postId = pathParts[1]
+        } else if (pathParts[0] === 'reel') {
+          info.type = 'reel'
+          info.reelId = pathParts[1]
+        } else {
+          info.type = 'profile'
+          info.username = pathParts[0]
+        }
+        break
+        
+      case 'tiktok':
+        if (pathParts[0] && pathParts[0].startsWith('@')) {
+          info.type = 'profile'
+          info.username = pathParts[0]
+          if (pathParts[1] === 'video') {
+            info.type = 'video'
+            info.videoId = pathParts[2]
+          }
+        }
+        break
+        
+      case 'twitter':
+        info.type = 'profile'
+        info.username = pathParts[0]
+        if (pathParts[1] === 'status') {
+          info.type = 'tweet'
+          info.tweetId = pathParts[2]
+        }
+        break
+        
+      case 'linkedin':
+        if (pathParts[0] === 'in') {
+          info.type = 'profile'
+          info.username = pathParts[1]
+        } else if (pathParts[0] === 'company') {
+          info.type = 'company'
+          info.companyName = pathParts[1]
+        }
+        break
+        
+      case 'youtube':
+        if (pathParts[0] === 'watch') {
+          info.type = 'video'
+          info.videoId = urlObj.searchParams.get('v')
+        } else if (pathParts[0] === 'channel' || pathParts[0] === 'c' || pathParts[0] === '@') {
+          info.type = 'channel'
+          info.channelName = pathParts[1] || pathParts[0]
+        }
+        break
+    }
+  } catch (e) {
+    console.error('Error extrayendo info de URL:', e)
+  }
+  
+  return info
+}
+
+/**
+ * Generar guía para contenido de redes sociales
+ */
+function generateSocialMediaGuidance(platform, info) {
+  const platformNames = {
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    tiktok: 'TikTok',
+    twitter: 'Twitter/X',
+    linkedin: 'LinkedIn',
+    youtube: 'YouTube'
+  }
+  
+  const platformName = platformNames[platform] || 'Red Social'
+  
+  let guidance = `
+═══════════════════════════════════════════════════
+ANÁLISIS DE ${platformName.toUpperCase()}
+═══════════════════════════════════════════════════
+
+⚠️ LIMITACIÓN: El contenido de redes sociales requiere autenticación
+y no puede ser extraído automáticamente.
+
+URL: ${info.url || 'N/A'}
+Plataforma: ${platformName}
+Tipo: ${info.type || 'Desconocido'}
+${info.username ? `Usuario: @${info.username}\n` : ''}
+${info.postId ? `Post ID: ${info.postId}\n` : ''}
+${info.videoId ? `Video ID: ${info.videoId}\n` : ''}
+
+INFORMACIÓN DETECTADA:
+`
+  
+  // Agregar guía específica por plataforma
+  switch (platform) {
+    case 'instagram':
+      guidance += `
+Para analizar este contenido de Instagram:
+1. Abre el enlace en tu navegador
+2. Copia el texto de la publicación
+3. Pégalo en el chat con contexto
+4. Ejemplo: "Analiza este post de Instagram: [texto copiado]"
+
+Información útil a copiar:
+- Descripción del post
+- Hashtags
+- Comentarios relevantes
+- Número de likes/interacciones
+`
+      break
+      
+    case 'tiktok':
+      guidance += `
+Para analizar este contenido de TikTok:
+1. Abre el video en tu navegador
+2. Copia la descripción y hashtags
+3. Describe el contenido del video
+4. Pégalo en el chat
+
+Información útil:
+- Descripción del video
+- Hashtags
+- Tema principal
+- Mensaje clave
+`
+      break
+      
+    case 'facebook':
+      guidance += `
+Para analizar este contenido de Facebook:
+1. Abre el enlace en tu navegador
+2. Copia el texto de la publicación
+3. Describe imágenes/videos si los hay
+4. Pégalo en el chat
+
+Información útil:
+- Texto de la publicación
+- Tipo de contenido (foto, video, texto)
+- Reacciones y comentarios destacados
+`
+      break
+      
+    case 'youtube':
+      guidance += `
+Para analizar este contenido de YouTube:
+1. Abre el video en tu navegador
+2. Copia el título y descripción
+3. Describe el contenido principal
+4. Pégalo en el chat
+
+Información útil:
+- Título del video
+- Descripción
+- Puntos clave del contenido
+- Transcripción si está disponible
+`
+      break
+      
+    default:
+      guidance += `
+Para analizar este contenido:
+1. Abre el enlace en tu navegador
+2. Copia el contenido relevante
+3. Pégalo en el chat con contexto
+`
+  }
+  
+  guidance += `
+═══════════════════════════════════════════════════
+
+💡 TIP: Proporciona el contenido manualmente para que pueda
+analizarlo y generar una presentación basada en él.
+`
+  
+  return guidance
 }

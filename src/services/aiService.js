@@ -6,12 +6,50 @@ import { searchWeb, formatSearchResults } from './webSearchService'
 
 // Historial de conversación
 let conversationHistory = []
+const MAX_HISTORY = 20 // Mantener últimos 20 mensajes
 
 /**
- * Inicializar contexto
+ * Inicializar contexto (NO limpia historial)
  */
 export function initializePresentationContext(slides, templateAnalysis) {
+  // Solo agregar contexto inicial si está vacío
+  if (conversationHistory.length === 0) {
+    conversationHistory.push({
+      role: 'system',
+      content: `Presentación inicializada con ${slides.length} slides`,
+      timestamp: Date.now()
+    })
+    console.log('🎯 Contexto de presentación inicializado')
+  } else {
+    console.log('🎯 Manteniendo historial existente:', conversationHistory.length, 'mensajes')
+  }
+}
+
+/**
+ * Limpiar historial de conversación
+ */
+export function clearConversationHistory() {
   conversationHistory = []
+  console.log('🗑️ Historial de conversación limpiado')
+}
+
+/**
+ * Obtener historial de conversación
+ */
+export function getConversationHistory() {
+  return [...conversationHistory]
+}
+
+/**
+ * Obtener estadísticas del historial
+ */
+export function getHistoryStats() {
+  return {
+    total: conversationHistory.length,
+    user: conversationHistory.filter(m => m.role === 'user').length,
+    assistant: conversationHistory.filter(m => m.role === 'assistant').length,
+    system: conversationHistory.filter(m => m.role === 'system').length
+  }
 }
 
 /**
@@ -21,6 +59,24 @@ export async function generateAIResponse(userMessage, currentSlide, allSlides = 
   try {
     const slideIndex = allSlides.indexOf(currentSlide)
     const slideInfo = `Slide ${slideIndex + 1} de ${allSlides.length}, tipo: ${currentSlide?.type || 'content'}`
+    
+    // Agregar mensaje del usuario al historial
+    conversationHistory.push({
+      role: 'user',
+      content: userMessage,
+      timestamp: Date.now(),
+      context: {
+        slideIndex,
+        slideType: currentSlide?.type,
+        totalSlides: allSlides.length
+      }
+    })
+    
+    // Mantener solo últimos MAX_HISTORY mensajes
+    if (conversationHistory.length > MAX_HISTORY) {
+      conversationHistory = conversationHistory.slice(-MAX_HISTORY)
+      console.log('📦 Historial recortado a', MAX_HISTORY, 'mensajes')
+    }
     
     // Detectar si necesita búsqueda web
     const needsWebSearch = detectWebSearchIntent(userMessage)
@@ -38,11 +94,18 @@ Contenido actual: ${JSON.stringify(currentSlide?.content || {})}
 
 ${webContext ? `INFORMACIÓN DE INTERNET:\n${webContext}\n\n` : ''}
 
+HISTORIAL DE CONVERSACIÓN (últimos 5 mensajes):
+${conversationHistory.slice(-5).map(h => 
+  `${h.role}: ${h.content.substring(0, 100)}${h.content.length > 100 ? '...' : ''}`
+).join('\n')}
+
 REGLAS:
-1. Si el usuario pide editar/mejorar: genera contenido mejorado
-2. Si hace pregunta general: responde normalmente
-3. Si da información: organízala en el slide
-4. Si pide investigar algo: usa la información de internet proporcionada
+1. Usa el historial para mantener contexto de la conversación
+2. Si el usuario dice "como antes", "lo mismo", "mejora eso", referencia mensajes anteriores
+3. Si el usuario pide editar/mejorar: genera contenido mejorado
+4. Si hace pregunta general: responde normalmente
+5. Si da información: organízala en el slide
+6. Si pide investigar algo: usa la información de internet proporcionada
 
 FORMATO DE RESPUESTA:
 - Si hay cambios al slide: {"message": "tu respuesta", "updates": {"title": "...", "subtitle": "...", "heading": "...", "bullets": ["...", "..."]}}
@@ -53,13 +116,24 @@ IMPORTANTE:
 - Para slides tipo "content": usa "heading" y "bullets" (array de strings)
 - Responde SOLO con JSON válido`
 
-    const messages = [
-      { role: 'user', content: userMessage }
-    ]
+    // Pasar últimos 10 mensajes a la IA
+    const recentMessages = conversationHistory.slice(-10).map(h => ({
+      role: h.role === 'system' ? 'user' : h.role,
+      content: h.content
+    }))
+    
+    recentMessages.push({ role: 'user', content: userMessage })
 
-    const aiContent = await callChutesAI(messages, { systemPrompt, maxTokens: 2000 })
+    const aiContent = await callChutesAI(recentMessages, { systemPrompt, maxTokens: 2000 })
     
     console.log('📄 Respuesta de IA:', aiContent)
+    
+    // Agregar respuesta al historial
+    conversationHistory.push({
+      role: 'assistant',
+      content: aiContent,
+      timestamp: Date.now()
+    })
     
     // Intentar parsear JSON de forma segura
     try {
@@ -326,10 +400,26 @@ export async function generateContent(prompt, templateAnalysis) {
  */
 function detectWebSearchIntent(message) {
   const msg = message.toLowerCase()
+  
+  // Detectar URLs directamente (con o sin protocolo)
+  const urlPatterns = [
+    /https?:\/\/[^\s]+/i,  // URLs con http/https
+    /[a-zA-Z0-9-]+\.(com|net|org|io|ai|co|es|mx|cl|ar|pe|uy|ve|bo|ec|py|gt|hn|sv|ni|cr|pa|do|cu|pr)[^\s]*/i  // Dominios sin protocolo
+  ]
+  
+  for (const pattern of urlPatterns) {
+    if (pattern.test(message)) {
+      console.log('🌐 URL detectada en mensaje:', message.match(pattern)[0])
+      return true
+    }
+  }
+  
+  // Palabras clave de búsqueda web
   const webKeywords = [
     'investiga', 'busca', 'información sobre', 'qué es', 'quién es',
-    'página', 'sitio web', 'website', '.com', '.net', '.org',
-    'actualidad', 'noticias', 'últimas', 'reciente'
+    'página', 'sitio web', 'website', 'analiza', 'analizar',
+    'actualidad', 'noticias', 'últimas', 'reciente',
+    'revisa', 'consulta', 'verifica'
   ]
   
   return webKeywords.some(keyword => msg.includes(keyword))

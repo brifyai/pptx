@@ -335,7 +335,7 @@ function MainSlideViewer({ slide, slideIndex, onSlideUpdate, extractedAssets, on
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [editingChart, setEditingChart] = useState(null)
   const [showExtractedAssets] = useState(false) // Deshabilitado por defecto
-  const [showContentOverlay, setShowContentOverlay] = useState(false) // Oculto por defecto
+  const [showContentOverlay, setShowContentOverlay] = useState(true) // VISIBLE por defecto para mostrar contenido generado
   const [showContentEditor, setShowContentEditor] = useState(false) // Editor de contenido
   const isMobile = useMobile(768)
 

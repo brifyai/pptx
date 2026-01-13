@@ -3,6 +3,14 @@ import { exportToPowerPoint, exportToPDF, exportToGoogleSlides, exportToFigma } 
 import '../styles/ExportOptions.css'
 
 function ExportOptions({ slides, templateFile, isOpen, onClose }) {
+  // DEBUG: Log cuando se abre el modal
+  console.log('🔍 ExportOptions render:', { 
+    isOpen, 
+    slidesLength: slides?.length,
+    slidesIsArray: Array.isArray(slides),
+    firstSlide: slides?.[0] ? { id: slides[0].id, hasContent: !!slides[0].content } : null
+  })
+
   const [exporting, setExporting] = useState(false)
   const [format, setFormat] = useState('pptx')
   const [showPreview, setShowPreview] = useState(false)
@@ -17,6 +25,26 @@ function ExportOptions({ slides, templateFile, isOpen, onClose }) {
 
   const handleExport = async () => {
     setExporting(true)
+    
+    // DEBUG: Log detallado del contenido antes de exportar
+    console.log('🚀 INICIANDO EXPORTACIÓN')
+    console.log('📊 Total de slides:', slides.length)
+    console.log('📄 Template file:', templateFile?.name)
+    console.log('📝 Contenido de cada slide:')
+    slides.forEach((slide, idx) => {
+      console.log(`  Slide ${idx + 1}:`)
+      console.log(`    - type: ${slide.type}`)
+      console.log(`    - content:`, slide.content)
+      if (slide.content) {
+        console.log(`      • title: ${slide.content.title || 'N/A'}`)
+        console.log(`      • subtitle: ${slide.content.subtitle || 'N/A'}`)
+        console.log(`      • heading: ${slide.content.heading || 'N/A'}`)
+        console.log(`      • bullets: ${slide.content.bullets?.length || 0} items`)
+        if (slide.content.bullets) {
+          slide.content.bullets.forEach((b, i) => console.log(`        ${i + 1}. ${b}`))
+        }
+      }
+    })
     
     try {
       switch(format) {

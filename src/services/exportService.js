@@ -14,6 +14,10 @@ export async function exportToPowerPoint(slides, templateFile = null) {
     // Si hay template, usar clonación completa en el backend
     if (templateFile) {
       console.log('📤 Usando clonación con template')
+      console.log('📤 Contenido de slides:', JSON.stringify(slides.map(s => ({
+        type: s.type,
+        content: s.content
+      })), null, 2))
       
       const formData = new FormData()
       formData.append('template', templateFile)

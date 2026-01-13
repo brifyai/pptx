@@ -167,7 +167,265 @@ Analiza los productos en https://ejemplo.com/productos
 Compara https://sitio1.com con https://sitio2.com
 ```
 
-## Limitaciones
+## Redes Sociales (Limitado)
+
+### ⚠️ Limitaciones Importantes
+
+Las redes sociales tienen restricciones técnicas:
+
+❌ **No se puede extraer contenido automáticamente** de:
+- Facebook
+- Instagram
+- TikTok
+- Twitter/X
+- LinkedIn
+
+**Razones**:
+1. Requieren login/autenticación
+2. Contenido cargado con JavaScript
+3. Protección anti-scraping
+4. APIs requieren permisos especiales
+
+### ✅ Lo Que SÍ Funciona
+
+Cuando pegas una URL de red social, la IA:
+1. **Detecta la plataforma** (Facebook, Instagram, TikTok, etc.)
+2. **Extrae información de la URL** (usuario, tipo de post, ID)
+3. **Proporciona guía** de cómo obtener el contenido manualmente
+
+### Cómo Usar con Redes Sociales
+
+#### Paso 1: Pega la URL
+```
+https://instagram.com/p/ABC123/
+```
+
+#### Paso 2: La IA Te Guía
+```
+📱 ANÁLISIS DE INSTAGRAM
+
+⚠️ El contenido requiere extracción manual
+
+URL: https://instagram.com/p/ABC123/
+Plataforma: Instagram
+Tipo: post
+
+Para analizar este contenido:
+1. Abre el enlace en tu navegador
+2. Copia el texto de la publicación
+3. Pégalo en el chat con contexto
+```
+
+#### Paso 3: Proporciona el Contenido
+```
+Analiza este post de Instagram:
+
+"Lanzamos nuestro nuevo producto! 🚀
+Características principales:
+- Diseño innovador
+- Tecnología de punta
+- Precio accesible
+
+#producto #innovación #tecnología"
+```
+
+#### Paso 4: La IA Analiza
+```
+Basado en el post de Instagram:
+
+Producto: Nuevo lanzamiento
+Características:
+- Diseño innovador
+- Tecnología de punta
+- Precio accesible
+
+Hashtags: #producto #innovación #tecnología
+```
+
+### Plataformas Detectadas
+
+✅ **Facebook** - facebook.com
+✅ **Instagram** - instagram.com
+✅ **TikTok** - tiktok.com
+✅ **Twitter/X** - twitter.com, x.com
+✅ **LinkedIn** - linkedin.com
+✅ **YouTube** - youtube.com, youtu.be
+
+### Información Extraída de la URL
+
+**Instagram**:
+- Tipo: profile, post, reel
+- Username: @usuario
+- Post ID: ABC123
+
+**TikTok**:
+- Tipo: profile, video
+- Username: @usuario
+- Video ID: 123456
+
+**Facebook**:
+- Tipo: profile, page, group
+- Username/Page name
+
+**YouTube**:
+- Tipo: video, channel
+- Video ID
+- Channel name
+
+### Ejemplo Completo: Instagram
+
+**1. Usuario pega URL**:
+```
+https://instagram.com/p/CxYz123/
+```
+
+**2. IA responde**:
+```
+📱 ANÁLISIS DE INSTAGRAM
+
+⚠️ LIMITACIÓN: El contenido requiere autenticación
+
+URL: https://instagram.com/p/CxYz123/
+Plataforma: Instagram
+Tipo: post
+Post ID: CxYz123
+
+Para analizar este contenido de Instagram:
+1. Abre el enlace en tu navegador
+2. Copia el texto de la publicación
+3. Pégalo en el chat con contexto
+
+Información útil a copiar:
+- Descripción del post
+- Hashtags
+- Comentarios relevantes
+- Número de likes/interacciones
+```
+
+**3. Usuario copia contenido**:
+```
+Analiza este post:
+
+"Nueva colección primavera-verano 2024 ☀️
+Descubre nuestros diseños exclusivos.
+Disponible en tienda y online.
+
+#moda #fashion #primavera2024 #colección"
+
+Likes: 1,234
+Comentarios: 56
+```
+
+**4. IA genera presentación**:
+```
+@all Genera presentación sobre esta colección
+
+Resultado:
+- Slide 1: Nueva Colección Primavera-Verano 2024
+- Slide 2: Diseños Exclusivos
+- Slide 3: Canales de Venta
+- Slide 4: Engagement (1,234 likes, 56 comentarios)
+```
+
+### Ejemplo: TikTok
+
+**URL**:
+```
+https://tiktok.com/@usuario/video/123456
+```
+
+**Guía de la IA**:
+```
+📱 ANÁLISIS DE TIKTOK
+
+Usuario: @usuario
+Tipo: video
+Video ID: 123456
+
+Para analizar:
+1. Abre el video
+2. Copia la descripción y hashtags
+3. Describe el contenido del video
+4. Pégalo en el chat
+```
+
+**Usuario proporciona**:
+```
+Video de TikTok sobre:
+
+Descripción: "Tutorial de maquillaje paso a paso 💄"
+Hashtags: #makeup #tutorial #beauty
+Contenido: Muestra 5 pasos para maquillaje natural
+Duración: 60 segundos
+Views: 50K
+```
+
+### Alternativa: YouTube
+
+YouTube es **más fácil** porque tiene contenido público:
+
+```
+https://youtube.com/watch?v=ABC123
+```
+
+La IA puede:
+- Detectar el video ID
+- Sugerir copiar título y descripción
+- Analizar transcripción si la proporcionas
+
+### Tips para Redes Sociales
+
+**1. Copia Contenido Relevante**:
+✅ Texto de la publicación
+✅ Hashtags
+✅ Descripción
+✅ Métricas (likes, shares, comentarios)
+
+**2. Proporciona Contexto**:
+✅ "Post de Instagram sobre..."
+✅ "Video de TikTok que muestra..."
+✅ "Tweet sobre..."
+
+**3. Describe Multimedia**:
+✅ "Imagen muestra..."
+✅ "Video de 30 segundos sobre..."
+✅ "Carrusel de 5 fotos con..."
+
+**4. Incluye Métricas**:
+✅ Número de likes
+✅ Comentarios destacados
+✅ Shares/retweets
+✅ Views
+
+### Limitaciones vs Sitios Web Normales
+
+| Característica | Sitios Web | Redes Sociales |
+|----------------|------------|----------------|
+| Extracción automática | ✅ Sí | ❌ No |
+| Requiere login | ❌ No | ✅ Sí |
+| Contenido público | ✅ Sí | ⚠️ Limitado |
+| Detección de URL | ✅ Sí | ✅ Sí |
+| Guía de extracción | ❌ No necesita | ✅ Sí proporciona |
+
+### Futuras Mejoras
+
+🔜 Integración con APIs oficiales (requiere registro)
+🔜 Extracción de imágenes de posts
+🔜 Análisis de métricas de engagement
+🔜 Comparación de perfiles
+🔜 Tendencias y hashtags
+
+### Resumen: Redes Sociales
+
+✅ **Detecta** URLs de redes sociales
+✅ **Identifica** plataforma y tipo
+✅ **Extrae** información de la URL
+✅ **Proporciona guía** de extracción manual
+❌ **No extrae** contenido automáticamente
+💡 **Solución**: Copiar y pegar contenido manualmente
+
+Para redes sociales, el flujo es:
+1. Pega URL → 2. IA te guía → 3. Copias contenido → 4. IA analiza
 
 ### URLs Soportadas
 ✅ `https://ejemplo.com`

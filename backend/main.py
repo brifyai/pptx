@@ -17,6 +17,8 @@ from routes.analysis import router as analysis_router
 from routes.export import router as export_router
 from routes.templates import router as templates_router
 from routes.collaboration import router as collaboration_router, websocket_collaboration
+from routes.search import router as search_router
+from routes.web_search import router as web_search_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -44,6 +46,8 @@ app.include_router(analysis_router)
 app.include_router(export_router)
 app.include_router(templates_router)
 app.include_router(collaboration_router)
+app.include_router(search_router)
+app.include_router(web_search_router)
 
 
 # Root endpoint
@@ -80,6 +84,7 @@ if __name__ == "__main__":
         app, 
         host="0.0.0.0", 
         port=8000,
+        reload=False,  # Desactivar auto-reload para evitar reinicios
         limit_concurrency=100,
         timeout_keep_alive=30
     )

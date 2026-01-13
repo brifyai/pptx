@@ -7,6 +7,15 @@ pydantic==2.5.0
 httpx>=0.25.0
 lxml>=4.9.0
 
+# PDF Support
+pdf2image>=1.16.0
+PyMuPDF>=1.23.0
+
+# Web Search
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+duckduckgo-search>=4.0.0
+
 # Testing
 pytest>=7.4.0
 hypothesis>=6.92.0

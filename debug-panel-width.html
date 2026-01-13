@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Panel Width - Slide AI</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #f0f0f5;
+        }
+        .container {
+            background: #252540;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #E85D3A;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #b0b0c0;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: #1e1e32;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #E85D3A;
+        }
+        .section h3 {
+            margin: 0 0 15px 0;
+            color: #E85D3A;
+        }
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #12121f;
+            border-radius: 6px;
+        }
+        .label {
+            color: #b0b0c0;
+        }
+        .value {
+            font-weight: bold;
+            color: #7dcea0;
+        }
+        .value.invalid {
+            color: #f5a0a0;
+        }
+        .value.warning {
+            color: #f5e0a0;
+        }
+        button {
+            background: #E85D3A;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #D24726;
+            transform: translateY(-2px);
+        }
+        button.secondary {
+            background: #4A7BC7;
+        }
+        button.secondary:hover {
+            background: #2B579A;
+        }
+        button.danger {
+            background: #e53e3e;
+        }
+        button.danger:hover {
+            background: #c53030;
+        }
+        .log {
+            background: #12121f;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4A7BC7;
+            padding-left: 10px;
+        }
+        .log-entry.error {
+            border-color: #e53e3e;
+            color: #f5a0a0;
+        }
+        .log-entry.warning {
+            border-color: #f5e0a0;
+            color: #f5e0a0;
+        }
+        .log-entry.success {
+            border-color: #7dcea0;
+            color: #7dcea0;
+        }
+        .monitor {
+            background: #1e1e32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .monitor h4 {
+            color: #E85D3A;
+            margin: 0 0 10px 0;
+        }
+        .monitor-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7dcea0;
+            text-align: center;
+            padding: 20px;
+            background: #12121f;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Debug Panel Width</h1>
+        <p class="subtitle">Herramienta de debugging en tiempo real</p>
+
+        <div class="section">
+            <h3>📊 Estado Actual</h3>
+            <div class="value-row">
+                <span class="label">Panel de Slides:</span>
+                <span class="value" id="slide-width">-</span>
+            </div>
+            <div class="value-row">
+                <span class="label">Panel de Chat:</span>
+                <span class="value" id="chat-width">-</span>
+            </div>
+            <div class="value-row">
+                <span class="label">Última actualización:</span>
+                <span class="value" id="last-update">-</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⚙️ Acciones</h3>
+            <button onclick="resetPanels()">Resetear Paneles</button>
+            <button class="secondary" onclick="monitorChanges()">Monitorear Cambios</button>
+            <button class="danger" onclick="clearAll()">Limpiar Todo</button>
+            <button class="secondary" onclick="exportLog()">Exportar Log</button>
+        </div>
+
+        <div class="monitor" id="monitor" style="display: none;">
+            <h4>📡 Monitoreo en Tiempo Real</h4>
+            <div class="monitor-value" id="monitor-value">Esperando cambios...</div>
+            <button onclick="stopMonitoring()">Detener Monitoreo</button>
+        </div>
+
+        <div class="section">
+            <h3>📝 Log de Eventos</h3>
+            <div class="log" id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let monitorInterval = null;
+        let previousValues = {};
+
+        // Agregar log
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            log.insertBefore(entry, log.firstChild);
+            
+            // Limitar a 50 entradas
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Mostrar valores actuales
+        function showCurrentValues() {
+            const slideWidth = localStorage.getItem('slide-thumbnails-width');
+            const chatWidth = localStorage.getItem('chat-panel-width');
+            
+            const slideEl = document.getElementById('slide-width');
+            const chatEl = document.getElementById('chat-width');
+            
+            // Validar y mostrar
+            if (slideWidth) {
+                const width = parseInt(slideWidth);
+                slideEl.textContent = slideWidth + 'px';
+                if (width < 200 || width > 500 || isNaN(width)) {
+                    slideEl.className = 'value invalid';
+                    addLog(`⚠️ Ancho de slides INVÁLIDO: ${slideWidth}px`, 'warning');
+                } else if (width < 250) {
+                    slideEl.className = 'value warning';
+                } else {
+                    slideEl.className = 'value';
+                }
+            } else {
+                slideEl.textContent = 'No configurado';
+                slideEl.className = 'value warning';
+            }
+            
+            if (chatWidth) {
+                const width = parseInt(chatWidth);
+                chatEl.textContent = chatWidth + 'px';
+                if (width < 300 || width > 700 || isNaN(width)) {
+                    chatEl.className = 'value invalid';
+                    addLog(`⚠️ Ancho de chat INVÁLIDO: ${chatWidth}px`, 'warning');
+                } else {
+                    chatEl.className = 'value';
+                }
+            } else {
+                chatEl.textContent = 'No configurado';
+                chatEl.className = 'value warning';
+            }
+            
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Resetear paneles
+        function resetPanels() {
+            localStorage.setItem('slide-thumbnails-width', '280');
+            localStorage.setItem('chat-panel-width', '400');
+            
+            addLog('✅ Paneles reseteados a valores por defecto', 'success');
+            addLog('   • Slides: 280px', 'success');
+            addLog('   • Chat: 400px', 'success');
+            
+            showCurrentValues();
+        }
+
+        // Monitorear cambios
+        function monitorChanges() {
+            if (monitorInterval) {
+                addLog('⚠️ Monitoreo ya está activo', 'warning');
+                return;
+            }
+            
+            document.getElementById('monitor').style.display = 'block';
+            addLog('📡 Iniciando monitoreo en tiempo real...', 'info');
+            
+            previousValues = {
+                slide: localStorage.getItem('slide-thumbnails-width'),
+                chat: localStorage.getItem('chat-panel-width')
+            };
+            
+            monitorInterval = setInterval(() => {
+                const currentSlide = localStorage.getItem('slide-thumbnails-width');
+                const currentChat = localStorage.getItem('chat-panel-width');
+                
+                if (currentSlide !== previousValues.slide) {
+                    addLog(`🔄 CAMBIO DETECTADO en slides: ${previousValues.slide} → ${currentSlide}`, 'warning');
+                    previousValues.slide = currentSlide;
+                    
+                    const width = parseInt(currentSlide);
+                    if (width < 200 || width > 500 || isNaN(width)) {
+                        addLog(`❌ VALOR INVÁLIDO DETECTADO: ${currentSlide}px`, 'error');
+                        document.getElementById('monitor-value').textContent = `⚠️ INVÁLIDO: ${currentSlide}px`;
+                        document.getElementById('monitor-value').style.color = '#f5a0a0';
+                    } else {
+                        document.getElementById('monitor-value').textContent = `✅ ${currentSlide}px`;
+                        document.getElementById('monitor-value').style.color = '#7dcea0';
+                    }
+                }
+                
+                if (currentChat !== previousValues.chat) {
+                    addLog(`🔄 CAMBIO DETECTADO en chat: ${previousValues.chat} → ${currentChat}`, 'warning');
+                    previousValues.chat = currentChat;
+                }
+                
+                showCurrentValues();
+            }, 100); // Revisar cada 100ms
+        }
+
+        // Detener monitoreo
+        function stopMonitoring() {
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+                monitorInterval = null;
+                document.getElementById('monitor').style.display = 'none';
+                addLog('⏹️ Monitoreo detenido', 'info');
+            }
+        }
+
+        // Limpiar todo
+        function clearAll() {
+            if (confirm('¿Estás seguro? Esto eliminará TODAS las configuraciones guardadas.')) {
+                localStorage.clear();
+                addLog('🗑️ Todo el localStorage limpiado', 'error');
+                showCurrentValues();
+            }
+        }
+
+        // Exportar log
+        function exportLog() {
+            const log = document.getElementById('log');
+            const entries = Array.from(log.children).map(e => e.textContent).reverse();
+            const text = entries.join('\n');
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `panel-debug-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addLog('📥 Log exportado', 'success');
+        }
+
+        // Inicializar
+        addLog('🚀 Debug tool iniciado', 'success');
+        showCurrentValues();
+        
+        // Actualizar cada 2 segundos si no está monitoreando
+        setInterval(() => {
+            if (!monitorInterval) {
+                showCurrentValues();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

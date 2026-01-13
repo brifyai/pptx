@@ -176,15 +176,15 @@ La transformación digital no es opcional, es necesaria para la supervivencia em
                   <div className="slide-content-preview">
                     {slide.type === 'title' ? (
                       <>
-                        <h5 className="preview-title">{slide.content.title}</h5>
-                        {slide.content.subtitle && (
+                        <h5 className="preview-title">{slide.content?.title || ''}</h5>
+                        {slide.content?.subtitle && (
                           <p className="preview-subtitle">{slide.content.subtitle}</p>
                         )}
                       </>
                     ) : (
                       <>
-                        <h5 className="preview-heading">{slide.content.heading}</h5>
-                        {slide.content.bullets && (
+                        <h5 className="preview-heading">{slide.content?.heading || ''}</h5>
+                        {slide.content?.bullets && (
                           <ul className="preview-bullets">
                             {slide.content.bullets.slice(0, 4).map((bullet, i) => (
                               <li key={i}>{bullet}</li>

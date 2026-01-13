@@ -25,6 +25,8 @@ import MobileTabBar from './components/MobileTabBar'
 import MobileMenu from './components/MobileMenu'
 import MobileCreateModal from './components/MobileCreateModal'
 import MobileSlideOptions from './components/MobileSlideOptions'
+import SlideErrorBoundary from './components/SlideErrorBoundary'
+import RibbonMenu from './components/RibbonMenu'
 import { AlertProvider, useAlert } from './components/CustomAlert'
 import { getChutesConfig } from './services/chutesService'
 import { Router, useRouter } from './SimpleRouter'
@@ -140,6 +142,23 @@ function AppContent() {
     }
   }, [])
 
+  // CRÍTICO: Sincronizar currentSlide cuando slides cambia
+  // Esto previene el error "Cannot read properties of undefined (reading 'content')"
+  useEffect(() => {
+    if (slides.length === 0) {
+      // No hay slides, resetear a 0
+      if (currentSlide !== 0) {
+        console.log('🔄 Reseteando currentSlide a 0 (no hay slides)')
+        setCurrentSlide(0)
+      }
+    } else if (currentSlide >= slides.length) {
+      // currentSlide está fuera de rango, ajustar al último slide válido
+      const newIndex = Math.max(0, slides.length - 1)
+      console.log(`🔄 Ajustando currentSlide de ${currentSlide} a ${newIndex} (fuera de rango)`)
+      setCurrentSlide(newIndex)
+    }
+  }, [slides.length, currentSlide, setCurrentSlide])
+
   // Agregar/quitar clase editor-mode al body según la ruta
   useEffect(() => {
     if (path === '/editor' && hasTemplate) {
@@ -237,12 +256,20 @@ function AppContent() {
 
   const handleApplyVariant = (variantContent) => {
     const slide = slides[currentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede aplicar variante: slide ${currentSlide} no existe o no tiene content`)
+      return
+    }
     handleSlideUpdate(slide.id, { ...slide.content, ...variantContent })
     logActivity('edit', `Variante aplicada a lámina ${currentSlide + 1}`)
   }
 
   const handleApplySuggestion = (newContent) => {
     const slide = slides[currentSlide]
+    if (!slide) {
+      console.warn(`⚠️ No se puede aplicar sugerencia: slide ${currentSlide} no existe`)
+      return
+    }
     handleSlideUpdate(slide.id, newContent)
     logActivity('edit', `Sugerencia aplicada a lámina ${currentSlide + 1}`)
   }
@@ -286,6 +313,10 @@ function AppContent() {
         break
       case 'edit':
         const slide = slides[currentSlide]
+        if (!slide || !slide.content) {
+          console.warn(`⚠️ No se puede editar por voz: slide ${currentSlide} no existe o no tiene content`)
+          return
+        }
         handleSlideUpdate(slide.id, { ...slide.content, [command.field]: command.value })
         break
     }
@@ -298,6 +329,10 @@ function AppContent() {
       id: Date.now()
     }
     const slide = slides[currentSlide]
+    if (!slide || !slide.content) {
+      console.warn(`⚠️ No se puede insertar asset: slide ${currentSlide} no existe o no tiene content`)
+      return
+    }
     handleSlideUpdate(slide.id, {
       ...slide.content,
       assets: [...(slide.content.assets || []), assetWithPosition]
@@ -516,69 +551,177 @@ function AppContent() {
         />
       )}
 
-      <header className="app-header">
-        <div className="header-left">
-          <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Volver al inicio">
-            <h1>Slide AI</h1>
-          </div>
-          <span className="slide-counter">
-            <span className="material-icons">slideshow</span>
-            Diapositiva {currentSlide + 1} de {slides.length}
-          </span>
-        </div>
-        <div className="header-actions">
-          <HeaderDropdown icon="download" label="Importar" items={[
-            { icon: 'file_upload', label: 'Importar desde PPTX', onClick: () => setShowContentImporter(true) },
-            { icon: 'content_paste', label: 'Pegar texto (ChatGPT)', onClick: () => setShowTextImporter(true) }
-          ]} />
-          <HeaderDropdown icon="folder" label="Archivos" items={[
-            { icon: 'folder_special', label: 'Biblioteca de Templates', onClick: () => setShowTemplateLibrary(true) },
-            { icon: 'folder_open', label: 'Historial Presentaciones', onClick: () => setShowPresentationHistory(true), shortcut: 'Ctrl+O' }
-          ]} />
-          <HeaderDropdown icon="psychology" label="Herramientas IA" items={[
-            { icon: 'shuffle', label: 'Generar variantes', onClick: () => setShowVariantGenerator(true) },
-            { icon: 'lightbulb', label: 'Sugerencias de mejora', onClick: () => setShowContentSuggestions(true) }
-          ]} />
-          <HeaderDropdown icon="brush" label="Diseño" isActive={showAssets || showThemes} items={[
-            { icon: 'collections', label: 'Insertar imágenes/iconos', onClick: () => setShowAssets(true) },
-            { icon: 'palette', label: 'Personalizar tema', onClick: () => setShowThemes(true) }
-          ]} />
-          <button className="btn-icon theme-toggle-btn" onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo oscuro'}>
-            <span className="material-icons">{isDark ? 'light_mode' : 'dark_mode'}</span>
-          </button>
-          <button className={`btn-icon ${voiceEnabled ? 'active' : ''}`} onClick={() => setVoiceEnabled(!voiceEnabled)} title="Comandos de voz">
-            <span className="material-icons">{voiceEnabled ? 'mic' : 'mic_none'}</span>
-          </button>
-          <button className={`btn-icon ${showHistory ? 'active' : ''}`} onClick={() => setShowHistory(!showHistory)} title="Historial de versiones">
-            <span className="material-icons">history</span>
-          </button>
-          <button className={`btn-icon ${showAnalytics ? 'active' : ''}`} onClick={() => setShowAnalytics(!showAnalytics)} title="Analytics">
-            <span className="material-icons">analytics</span>
-          </button>
-          <button className={`btn-icon ${isCollaborating ? 'active' : ''}`} onClick={() => setIsCollaborating(!isCollaborating)} title="Colaboración">
-            <span className="material-icons">groups</span>
-          </button>
-          <button type="button" className="btn-icon" onClick={() => setShowKeyboardHelp(true)} title="Atajos de teclado">
-            <span className="material-icons">keyboard</span>
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => { saveTemplate(); showToast('Presentación guardada') }} title="Guardar (Ctrl+S)">
-            <span className="material-icons">save</span>Guardar
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => setShowShareModal(true)} title="Compartir">
-            <span className="material-icons">share</span>Compartir
-          </button>
-          <button type="button" className="btn-primary" onClick={() => setShowExport(true)}>
-            <span className="material-icons">file_download</span>Exportar
-          </button>
-          {user && (
-            <HeaderDropdown icon="person" label={user.name || 'Usuario'} items={[
-              { icon: 'person', label: 'Mi Perfil', onClick: () => { setProfileInitialTab('profile'); setShowProfile(true) } },
-              { icon: 'settings', label: 'Configuración', onClick: () => { setProfileInitialTab('settings'); setShowProfile(true) } },
-              { icon: 'logout', label: 'Cerrar Sesión', onClick: handleLogout }
-            ]} />
-          )}
-        </div>
-      </header>
+      {/* Ribbon Menu - Solo en desktop */}
+      {!isMobile && (
+        <RibbonMenu
+          onNewPresentation={() => {
+            setHasTemplate(false)
+            setSlides([])
+            navigate('/')
+            showToast('Nueva presentación')
+          }}
+          onOpenTemplate={() => setShowTemplateLibrary(true)}
+          onSave={() => {
+            saveTemplate()
+            showToast('Presentación guardada')
+          }}
+          onExport={() => setShowExport(true)}
+          onUndo={() => showToast('Deshacer - próximamente')}
+          onRedo={() => showToast('Rehacer - próximamente')}
+          onAddSlide={() => {
+            handleSlideAdd()
+            showToast('Nueva diapositiva agregada')
+          }}
+          onDeleteSlide={() => {
+            if (slides.length > 1) {
+              handleSlideDelete(currentSlide)
+            } else {
+              showWarning('No se puede eliminar', 'Debe haber al menos una diapositiva')
+            }
+          }}
+          onDuplicateSlide={() => {
+            handleSlideDuplicate(currentSlide)
+            showToast('Diapositiva duplicada')
+          }}
+          onChangeLayout={(layoutId) => {
+            showToast(`Layout "${layoutId}" - próximamente`)
+          }}
+          onInsertImage={() => setShowAssets(true)}
+          onInsertChart={(type) => {
+            if (type) showToast(`Gráfico ${type} - próximamente`)
+            else showToast('Insertar gráfico - próximamente')
+          }}
+          onInsertTable={(type) => {
+            if (type) showToast(`Tabla ${type} - próximamente`)
+            else showToast('Insertar tabla - próximamente')
+          }}
+          onInsertShape={(type) => {
+            if (type) showToast(`Forma ${type} - próximamente`)
+            else showToast('Insertar forma - próximamente')
+          }}
+          onInsertIcon={() => setShowAssets(true)}
+          onInsertVideo={() => showToast('Insertar video - próximamente')}
+          onInsertAudio={() => showToast('Insertar audio - próximamente')}
+          onTextFormat={() => showToast('Formato de texto - próximamente')}
+          onAlignContent={() => showToast('Alinear contenido - próximamente')}
+          onThemeChange={(themeId) => {
+            setShowThemes(true)
+          }}
+          onShare={(action) => {
+            if (action === 'link') {
+              navigator.clipboard.writeText(window.location.href)
+              showToast('Enlace copiado al portapapeles')
+            } else {
+              setShowShareModal(true)
+            }
+          }}
+          onPublish={() => showToast('Publicar presentación - próximamente')}
+          onAIGenerate={(type) => {
+            if (type === 'variants') setShowVariantGenerator(true)
+            else if (type === 'suggestions') setShowContentSuggestions(true)
+            else showToast('Generar contenido con IA - próximamente')
+          }}
+          onAIRewrite={() => showToast('Reescribir con IA - próximamente')}
+          onAITranslate={() => showToast('Traducir con IA - próximamente')}
+          onAISummarize={() => showToast('Resumir con IA - próximamente')}
+          onAIAnalyzeAudience={(type) => {
+            if (type === 'tone') showToast('Análisis de tono - próximamente')
+            else if (type === 'facts') showToast('Verificación de datos - próximamente')
+            else setShowAnalytics(true)
+          }}
+          onAIImageGenerate={(type) => {
+            if (type === 'enhance') showToast('Mejorar imagen con IA - próximamente')
+            else if (type === 'remove-bg') showToast('Quitar fondo con IA - próximamente')
+            else showToast('Generar imagen con IA - próximamente')
+          }}
+          onAIVoiceDictate={(type) => {
+            if (type === 'narration') showToast('Narración IA - próximamente')
+            else {
+              setVoiceEnabled(!voiceEnabled)
+              showToast(voiceEnabled ? 'Dictado desactivado' : 'Dictado activado')
+            }
+          }}
+          onDataConnect={(action) => {
+            if (action === 'refresh') showToast('Actualizar datos - próximamente')
+            else showToast('Conectar datos en vivo - próximamente')
+          }}
+          onDataImportExcel={() => showToast('Importar desde Excel - próximamente')}
+          onDataImportSheets={() => showToast('Importar desde Google Sheets - próximamente')}
+          onCollabShare={(action) => {
+            if (action === 'link') {
+              navigator.clipboard.writeText(window.location.href)
+              showToast('Enlace copiado')
+            } else if (action === 'permissions') {
+              showToast('Configurar permisos - próximamente')
+            } else if (action === 'admin') {
+              showToast('Administrar acceso - próximamente')
+            } else {
+              setShowShareModal(true)
+            }
+          }}
+          onCollabInvite={(action) => {
+            if (action === 'view') showToast('Ver colaboradores - próximamente')
+            else if (action === 'realtime') {
+              setIsCollaborating(!isCollaborating)
+              showToast(isCollaborating ? 'Colaboración desactivada' : 'Colaboración activada')
+            } else {
+              showToast('Invitar personas - próximamente')
+            }
+          }}
+          onCollabComments={(action) => {
+            if (action === 'view') showToast('Ver comentarios - próximamente')
+            else if (action === 'resolve') showToast('Resolver comentarios - próximamente')
+            else showToast('Nuevo comentario - próximamente')
+          }}
+          onCollabHistory={(action) => {
+            if (action === 'restore') showToast('Restaurar versión - próximamente')
+            else setShowHistory(true)
+          }}
+          onToolsFormatPainter={(action) => {
+            if (action === 'rules') showToast('Reglas automáticas - próximamente')
+            else showToast('Copiar formato - próximamente')
+          }}
+          onToolsFindReplace={() => showToast('Buscar y reemplazar - próximamente')}
+          onToolsMacros={(action) => {
+            if (action === 'run') showToast('Ejecutar macro - próximamente')
+            else showToast('Grabar macro - próximamente')
+          }}
+          onToolsAccessibility={(action) => {
+            if (action === 'captions') showToast('Subtítulos - próximamente')
+            else showToast('Verificar accesibilidad - próximamente')
+          }}
+          onToolsOptimize={(action) => {
+            if (action === 'performance') showToast('Optimizar rendimiento - próximamente')
+            else if (action === 'addons') showToast('Complementos - próximamente')
+            else if (action === 'api') showToast('Integración API - próximamente')
+            else showToast('Comprimir imágenes - próximamente')
+          }}
+          onSpellCheck={() => showToast('Revisar ortografía - próximamente')}
+          onShowComments={(action) => {
+            if (action === 'view') showToast('Mostrar comentarios - próximamente')
+            else showToast('Nuevo comentario - próximamente')
+          }}
+          onViewPresentation={(mode) => {
+            if (mode === 'normal') showToast('Vista normal')
+            else if (mode === 'sorter') showToast('Vista clasificador - próximamente')
+            else showToast('Modo presentación - próximamente')
+          }}
+          onZoom={(action) => {
+            if (action === 'in') showToast('Acercar zoom')
+            else if (action === 'out') showToast('Alejar zoom')
+            else if (action === 'fit') showToast('Ajustar zoom')
+          }}
+          onHelp={(action) => {
+            if (action === 'support') window.location.href = 'mailto:soporte@slideai.com'
+            else if (action === 'feedback') showToast('Enviar comentarios - próximamente')
+            else if (action === 'about') showToast('Slide AI v1.0 - Presentaciones con IA')
+            else setShowOnboarding(true)
+          }}
+          canUndo={false}
+          canRedo={false}
+          currentSlide={slides[currentSlide]}
+        />
+      )}
 
       <div className="main-layout">
         {showFontWarning && fontAnalysis && (
@@ -591,36 +734,49 @@ function AppContent() {
         
         <div className="main-layout-content">
           <ResizablePanel defaultWidth={280} minWidth={200} maxWidth={500} position="left" storageKey="slide-thumbnails-width">
-            <SlideViewer 
-              slides={slides}
-              currentSlide={currentSlide}
-              onSlideChange={handleNavigateSlide}
-              onSlideUpdate={handleSlideUpdate}
-              extractedAssets={extractedAssets}
-              onSlideReorder={handleSlideReorder}
-              onSlideDuplicate={handleSlideDuplicate}
-              onSlideDelete={handleSlideDelete}
-              onSlideRename={handleSlideRename}
-              onSlideAdd={handleSlideAdd}
-              logActivity={logActivity}
-              onSlideOptionsOpen={(slide) => {
-                if (isMobile) {
-                  setSelectedSlide(slide)
-                  setShowSlideOptions(true)
-                }
-              }}
-            />
+            <SlideErrorBoundary onRetry={() => {
+              // Forzar currentSlide a un valor válido
+              if (currentSlide >= slides.length) {
+                setCurrentSlide(Math.max(0, slides.length - 1))
+              }
+            }}>
+              <SlideViewer 
+                slides={slides}
+                currentSlide={currentSlide}
+                onSlideChange={handleNavigateSlide}
+                onSlideUpdate={handleSlideUpdate}
+                extractedAssets={extractedAssets}
+                onSlideReorder={handleSlideReorder}
+                onSlideDuplicate={handleSlideDuplicate}
+                onSlideDelete={handleSlideDelete}
+                onSlideRename={handleSlideRename}
+                onSlideAdd={handleSlideAdd}
+                logActivity={logActivity}
+                onSlideOptionsOpen={(slide) => {
+                  if (isMobile) {
+                    setSelectedSlide(slide)
+                    setShowSlideOptions(true)
+                  }
+                }}
+              />
+            </SlideErrorBoundary>
           </ResizablePanel>
           
           <div className="center-panel">
-            <MainSlideViewer
-              slide={slides[currentSlide]}
-              slideIndex={currentSlide}
-              onSlideUpdate={handleSlideUpdate}
-              extractedAssets={extractedAssets}
-              onNavigateSlide={handleNavigateSlide}
-              totalSlides={slides.length}
-            />
+            <SlideErrorBoundary onRetry={() => {
+              if (currentSlide >= slides.length) {
+                setCurrentSlide(Math.max(0, slides.length - 1))
+              }
+            }}>
+              <MainSlideViewer
+                slide={slides[currentSlide]}
+                slideIndex={currentSlide}
+                onSlideUpdate={handleSlideUpdate}
+                extractedAssets={extractedAssets}
+                onNavigateSlide={handleNavigateSlide}
+                totalSlides={slides.length}
+              />
+            </SlideErrorBoundary>
           </div>
           
           <ResizablePanel defaultWidth={400} minWidth={300} maxWidth={700} position="right" storageKey="chat-panel-width">
@@ -638,13 +794,19 @@ function AppContent() {
         </div>
       </div>
 
+      {/* ExportOptions - Fuera del Suspense para evitar re-renders que colapsan paneles */}
+      <Suspense fallback={null}>
+        {showExport && <ExportOptions slides={slides} templateFile={templateFile} isOpen={showExport} onClose={() => {
+          setShowExport(false)
+        }} />}
+      </Suspense>
+
       {/* Features cargadas bajo demanda */}
       <Suspense fallback={null}>
         {voiceEnabled && <VoiceCommands onCommand={handleVoiceCommand} isActive={voiceEnabled} />}
         {showHistory && <VersionHistory slides={slides} onRestore={handleVersionRestore} onClose={() => setShowHistory(false)} />}
         {showAssets && <AssetLibrary onInsert={handleAssetInsert} isOpen={showAssets} onClose={() => setShowAssets(false)} />}
         {showThemes && <ThemeCustomizer onThemeChange={handleThemeChange} isOpen={showThemes} onClose={() => setShowThemes(false)} />}
-        {showExport && <ExportOptions slides={slides} templateFile={templateFile} isOpen={showExport} onClose={() => setShowExport(false)} />}
         {showAnalytics && <Analytics slides={slides} currentSlide={currentSlide} isOpen={showAnalytics} onClose={() => setShowAnalytics(false)} templateData={currentTemplateData} />}
         {showContentImporter && <ContentImporter slides={slides} onImport={handleContentImport} onClose={() => setShowContentImporter(false)} />}
         {showTemplateLibrary && <TemplateLibrary currentTemplateFile={templateFile} onSelectTemplate={handleTemplateFromLibrary} onClose={() => setShowTemplateLibrary(false)} />}

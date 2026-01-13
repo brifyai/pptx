@@ -99,6 +99,16 @@ body.editor-mode {
   background: var(--bg-section);
 }
 
+/* Ajuste para el ribbon menu */
+.app > .ribbon-menu {
+  flex-shrink: 0;
+}
+
+.app > .main-layout {
+  flex: 1;
+  overflow: hidden;
+}
+
 /* Header */
 .app-header {
   background: var(--bg-light);
@@ -211,6 +221,8 @@ body.editor-mode {
   flex: 1;
   overflow: hidden;
   position: relative;
+  /* Prevenir que los modales afecten el layout */
+  isolation: isolate;
 }
 
 .center-panel {
@@ -481,6 +493,48 @@ body.editor-mode {
 .cache-indicator {
   position: relative;
   margin-top: 20px;
+}
+
+/* Supported formats badges */
+.supported-formats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.format-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.format-badge .material-icons {
+  font-size: 16px;
+}
+
+.format-badge.pptx {
+  background: rgba(210, 71, 38, 0.1);
+  color: var(--ppt-orange);
+  border: 1px solid rgba(210, 71, 38, 0.2);
+}
+
+.format-badge.pdf {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.upload-zone:hover .format-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .cache-info-btn {

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Panel Width - Slide AI</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #D24726;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #D24726;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .value {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        button {
+            background: #D24726;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #B83D1F;
+            transform: translateY(-2px);
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Panel Width</h1>
+        <p class="subtitle">Herramienta para resetear el ancho de los paneles laterales</p>
+
+        <div class="info-box">
+            <h3>Estado Actual</h3>
+            <p>Panel de Slides: <span class="value" id="slide-width">-</span></p>
+            <p>Panel de Chat: <span class="value" id="chat-width">-</span></p>
+        </div>
+
+        <div class="info-box">
+            <h3>Valores por Defecto</h3>
+            <p>Panel de Slides: <span class="value">280px</span></p>
+            <p>Panel de Chat: <span class="value">400px</span></p>
+        </div>
+
+        <div class="actions">
+            <button onclick="resetPanels()">Resetear Paneles</button>
+            <button class="secondary" onclick="clearAll()">Limpiar Todo</button>
+        </div>
+
+        <div class="success" id="success">
+            ✅ Paneles reseteados correctamente. Recarga la aplicación.
+        </div>
+    </div>
+
+    <script>
+        // Mostrar valores actuales
+        function showCurrentValues() {
+            const slideWidth = localStorage.getItem('slide-thumbnails-width') || 'No configurado';
+            const chatWidth = localStorage.getItem('chat-panel-width') || 'No configurado';
+            
+            document.getElementById('slide-width').textContent = slideWidth + (slideWidth !== 'No configurado' ? 'px' : '');
+            document.getElementById('chat-width').textContent = chatWidth + (chatWidth !== 'No configurado' ? 'px' : '');
+        }
+
+        // Resetear paneles a valores por defecto
+        function resetPanels() {
+            localStorage.setItem('slide-thumbnails-width', '280');
+            localStorage.setItem('chat-panel-width', '400');
+            
+            showCurrentValues();
+            document.getElementById('success').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('success').style.display = 'none';
+            }, 3000);
+        }
+
+        // Limpiar todo el localStorage
+        function clearAll() {
+            if (confirm('¿Estás seguro? Esto eliminará TODAS las configuraciones guardadas.')) {
+                localStorage.clear();
+                showCurrentValues();
+                document.getElementById('success').textContent = '✅ Todo el localStorage limpiado. Recarga la aplicación.';
+                document.getElementById('success').style.display = 'block';
+            }
+        }
+
+        // Mostrar valores al cargar
+        showCurrentValues();
+    </script>
+</body>
+</html>
