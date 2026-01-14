@@ -1,11 +1,19 @@
 /**
  * Hook for managing slide operations (CRUD, reorder, etc.)
+ * Includes Undo/Redo functionality
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
+
+const MAX_HISTORY = 50  // Máximo número de estados en el historial
 
 export function useSlideManagement(initialSlides = [], { showToast, showWarning, showDeleteConfirm, logActivity }) {
   const [slides, setSlides] = useState(initialSlides)
   const [currentSlide, setCurrentSlide] = useState(0)
+  
+  // Undo/Redo history
+  const [history, setHistory] = useState([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const isUndoRedoAction = useRef(false)
 
   const getEmptyContent = useCallback((type) => {
     if (type === 'title') {
@@ -14,16 +22,71 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     return { heading: 'Título', bullets: ['Punto 1', 'Punto 2', 'Punto 3'] }
   }, [])
 
+  // Helper to add state to history
+  const addToHistory = useCallback((currentSlides) => {
+    setHistory(prev => {
+      // Remove any future states if we're not at the end
+      const newHistory = prev.slice(0, historyIndex + 1)
+      // Add new state
+      newHistory.push(JSON.parse(JSON.stringify(currentSlides)))
+      // Limit history size
+      if (newHistory.length > MAX_HISTORY) {
+        newHistory.shift()
+      }
+      return newHistory
+    })
+    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1))
+  }, [historyIndex])
+  
+  // Undo function
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      const previousState = history[historyIndex - 1]
+      setSlides(previousState)
+      setHistoryIndex(historyIndex - 1)
+      showToast?.('Deshacer')
+      logActivity?.('undo', 'Deshacer última acción')
+    } else if (historyIndex === 0 && history.length > 0) {
+      // Go back to initial state
+      setSlides(history[0])
+      setHistoryIndex(-1)
+      showToast?.('Deshacer')
+      logActivity?.('undo', 'Deshacer última acción')
+    }
+  }, [history, historyIndex, showToast, logActivity])
+  
+  // Redo function
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1]
+      setSlides(nextState)
+      setHistoryIndex(historyIndex + 1)
+      showToast?.('Rehacer')
+      logActivity?.('redo', 'Rehacer acción')
+    }
+  }, [history, historyIndex, showToast, logActivity])
+  
+  // Check if undo/redo is available
+  const canUndo = historyIndex >= 0 || history.length > 0
+  const canRedo = historyIndex < history.length - 1
+  
   const handleSlideUpdate = useCallback((slideId, newContent, skipLog = false) => {
-    setSlides(prev => prev.map(slide => 
-      slide.id === slideId ? { ...slide, content: newContent } : slide
-    ))
+    setSlides(prev => {
+      const newSlides = prev.map(slide =>
+        slide.id === slideId ? { ...slide, content: newContent } : slide
+      )
+      // Only add to history if not in undo/redo action
+      if (!isUndoRedoAction.current && !skipLog) {
+        addToHistory(newSlides)
+      }
+      return newSlides
+    })
     
     if (!skipLog && logActivity) {
       const slideIndex = slides.findIndex(s => s.id === slideId)
       logActivity('edit', `Contenido editado en lámina ${slideIndex + 1}`)
     }
-  }, [slides, logActivity])
+  }, [slides, logActivity, addToHistory])
 
   // Batch update for multiple slides at once
   const handleBatchSlideUpdate = useCallback((updates, skipLog = false) => {
@@ -61,13 +124,19 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
       })
       
       console.log('✅ Slides actualizados:', updatedSlides.length)
+      
+      // Add to history if not undo/redo
+      if (!isUndoRedoAction.current && !skipLog) {
+        addToHistory(updatedSlides)
+      }
+      
       return updatedSlides
     })
     
     if (!skipLog && logActivity) {
       logActivity('edit', `${updates.length} láminas actualizadas con contenido generado`)
     }
-  }, [logActivity])
+  }, [slides.length, logActivity, addToHistory])
 
   const handleNavigateSlide = useCallback((newIndex) => {
     if (newIndex !== currentSlide && newIndex >= 0 && newIndex < slides.length) {
@@ -80,7 +149,9 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
       const newSlides = [...prev]
       const [movedSlide] = newSlides.splice(fromIndex, 1)
       newSlides.splice(toIndex, 0, movedSlide)
-      return newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+      const result = newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+      addToHistory(result)
+      return result
     })
     
     if (currentSlide === fromIndex) {
@@ -92,7 +163,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     }
     
     logActivity?.('reorder', `Lámina ${fromIndex + 1} movida a posición ${toIndex + 1}`)
-  }, [currentSlide, logActivity])
+  }, [currentSlide, logActivity, addToHistory])
 
   const handleSlideAdd = useCallback(() => {
     setSlides(prev => {
@@ -104,6 +175,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
         preview: null
       }
       const newSlides = [...prev, newSlide].map((slide, index) => ({ ...slide, id: index + 1 }))
+      addToHistory(newSlides)
       // Navegar al nuevo slide (último índice)
       setCurrentSlide(newSlides.length - 1)
       return newSlides
@@ -111,7 +183,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     
     showToast?.('Nueva lámina agregada')
     logActivity?.('add', `Nueva lámina ${slides.length + 1} creada`)
-  }, [getEmptyContent, showToast, logActivity, slides.length])
+  }, [getEmptyContent, showToast, logActivity, slides.length, addToHistory])
 
   const handleSlideDuplicate = useCallback((slideIndex) => {
     setSlides(prev => {
@@ -124,7 +196,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
         ...slideToDuplicate,
         id: Date.now(),
         name: `${slideToDuplicate.name || `Lámina ${slideIndex + 1}`} (copia)`,
-        content: slideToDuplicate.content 
+        content: slideToDuplicate.content
           ? JSON.parse(JSON.stringify(slideToDuplicate.content))
           : getEmptyContent(slideToDuplicate.type || 'content'),
         preview: slideToDuplicate.preview
@@ -135,13 +207,15 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
         newSlide,
         ...prev.slice(slideIndex + 1)
       ]
-      return newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+      const result = newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+      addToHistory(result)
+      return result
     })
     
     setCurrentSlide(slideIndex + 1)
     showToast?.(`Lámina ${slideIndex + 1} duplicada`)
     logActivity?.('duplicate', `Lámina ${slideIndex + 1} duplicada`)
-  }, [showToast, logActivity, getEmptyContent])
+  }, [showToast, logActivity, getEmptyContent, addToHistory])
 
   const handleSlideDelete = useCallback((slideIndex) => {
     if (slides.length <= 1) {
@@ -153,6 +227,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
       setSlides(prev => {
         const newSlides = prev.filter((_, index) => index !== slideIndex)
         const reindexedSlides = newSlides.map((slide, index) => ({ ...slide, id: index + 1 }))
+        addToHistory(reindexedSlides)
         
         // Ajustar currentSlide basado en la nueva longitud
         if (currentSlide >= reindexedSlides.length) {
@@ -170,7 +245,7 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
       showToast?.(`Lámina ${slideIndex + 1} eliminada`)
       logActivity?.('delete', `Lámina ${slideIndex + 1} eliminada`)
     })
-  }, [currentSlide, showWarning, showDeleteConfirm, showToast, logActivity])
+  }, [currentSlide, showWarning, showDeleteConfirm, showToast, logActivity, addToHistory])
 
   const handleSlideRename = useCallback((slideId, newName) => {
     const slideIndex = slides.findIndex(s => s.id === slideId)
@@ -209,6 +284,11 @@ export function useSlideManagement(initialSlides = [], { showToast, showWarning,
     handleSlideDuplicate,
     handleSlideDelete,
     handleSlideRename,
-    initializeSlides
+    initializeSlides,
+    // Undo/Redo
+    undo,
+    redo,
+    canUndo,
+    canRedo
   }
 }

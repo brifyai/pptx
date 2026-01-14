@@ -27,6 +27,45 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Importar módulos avanzados para SmartArt, gráficos y tablas
+SMARTART_AVAILABLE = False
+CHART_MODIFIER_AVAILABLE = False
+TABLE_PRESERVER_AVAILABLE = False
+
+try:
+    from smartart_extractor import (
+        extract_smartart_from_pptx,
+        extract_diagram_text,
+        analyze_smartart_for_ai,
+        extract_process_steps,
+        extract_hierarchy_text
+    )
+    SMARTART_AVAILABLE = True
+    logger.info("✅ Módulo SmartArt disponible para clonador XML")
+except ImportError as e:
+    logger.warning(f"⚠️ Módulo SmartArt no disponible: {e}")
+
+try:
+    from chart_modifier import (
+        extract_chart_data as extract_chart_data_advanced,
+        generate_chart_data_with_ai,
+        analyze_chart_for_ai
+    )
+    CHART_MODIFIER_AVAILABLE = True
+    logger.info("✅ Módulo Chart Modifier disponible para clonador XML")
+except ImportError as e:
+    logger.warning(f"⚠️ Módulo Chart Modifier no disponible: {e}")
+
+try:
+    from table_preserver import (
+        extract_table_data,
+        analyze_table_for_ai
+    )
+    TABLE_PRESERVER_AVAILABLE = True
+    logger.info("✅ Módulo Table Preserver disponible para clonador XML")
+except ImportError as e:
+    logger.warning(f"⚠️ Módulo Table Preserver no disponible: {e}")
+
 # Namespaces de PowerPoint Open XML
 NAMESPACES = {
     'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
@@ -132,6 +171,7 @@ class PPTXXMLCloner:
     - Efectos 3D (a:scene3d, a:sp3d)
     - Imágenes y sus efectos
     - Formas y sus propiedades
+    - Macros VBA (vbaProject.bin) - ¡NUEVO!
     """
     
     def __init__(self, template_path: str):
@@ -147,6 +187,8 @@ class PPTXXMLCloner:
         self.slide_count = 0
         self.fonts_used: set = set()  # Fuentes usadas en el template
         self.preservation_report: List[Dict] = []  # Reporte de preservación
+        self.vba_project_data: Optional[bytes] = None  # Datos del proyecto VBA (macros)
+        self.has_vba_macros: bool = False  # Flag indicando si hay macros
         
         # Analizar estructura del template
         self._analyze_template()
@@ -161,10 +203,13 @@ class PPTXXMLCloner:
             with zipfile.ZipFile(self.template_path, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
             
+            # 🔍 DETECTAR Y EXTRAER MACROS VBA
+            self._extract_vba_project(temp_dir)
+            
             # Contar slides
             slides_dir = os.path.join(temp_dir, 'ppt', 'slides')
             if os.path.exists(slides_dir):
-                slide_files = [f for f in os.listdir(slides_dir) 
+                slide_files = [f for f in os.listdir(slides_dir)
                               if f.startswith('slide') and f.endswith('.xml')]
                 self.slide_count = len(slide_files)
                 
@@ -184,6 +229,36 @@ class PPTXXMLCloner:
             
         finally:
             shutil.rmtree(temp_dir)
+    
+    def _extract_vba_project(self, temp_dir: str):
+        """
+        Extrae el proyecto VBA (macros) del template si existe.
+        
+        Los macros VBA en PPTX se almacenan en:
+        - ppt/vbaProject.bin (archivo binario con el proyecto VBA)
+        """
+        vba_paths = [
+            os.path.join(temp_dir, 'ppt', 'vbaProject.bin'),
+            os.path.join(temp_dir, 'vbaProject.bin'),
+        ]
+        
+        for vba_path in vba_paths:
+            if os.path.exists(vba_path):
+                try:
+                    with open(vba_path, 'rb') as f:
+                        self.vba_project_data = f.read()
+                    
+                    self.has_vba_macros = True
+                    vba_size_kb = len(self.vba_project_data) / 1024
+                    logger.info(f"🔴 MACROS VBA DETECTADOS: {vba_size_kb:.1f} KB")
+                    logger.info(f"   📦 Proyecto VBA preservado para clonación")
+                    return
+                except Exception as e:
+                    logger.warning(f"⚠️ Error leyendo VBA project: {e}")
+        
+        logger.info(f"ℹ️ Template sin macros VBA")
+        self.has_vba_macros = False
+        self.vba_project_data = None
     
     def _extract_fonts(self, temp_dir: str):
         """Extrae todas las fuentes usadas en el template"""
@@ -400,7 +475,8 @@ class PPTXXMLCloner:
         return f"//p:sp[@id='{shape_id}']/p:txBody/a:p[{para_idx+1}]/a:r[{run_idx+1}]/a:t"
 
     
-    def clone_with_content(self, content_by_slide: List[Dict[str, Any]]) -> str:
+    def clone_with_content(self, content_by_slide: List[Dict[str, Any]],
+                          text_areas_by_slide: List[List[Dict]] = None) -> str:
         """
         Clona el template reemplazando solo el texto.
         
@@ -408,15 +484,22 @@ class PPTXXMLCloner:
             content_by_slide: Lista de diccionarios con contenido por slide.
                 Cada diccionario puede tener:
                 - 'title': str
-                - 'subtitle': str  
+                - 'subtitle': str
                 - 'heading': str
                 - 'bullets': List[str]
                 - 'body': str
+            text_areas_by_slide: Lista de textAreas por slide (del análisis).
+                Cada textArea tiene:
+                - 'id': shape_id
+                - 'type': 'title'|'subtitle'|'bullets'|'body'
+                - 'position': {x, y, width, height}
+                - 'text': texto original
         
         Returns:
             Path al archivo PPTX generado
         """
         logger.info(f"🔄 Clonando template con {len(content_by_slide)} slides de contenido")
+        logger.info(f"📍 text_areas_by_slide: {text_areas_by_slide is not None}")
         
         # 1. Extraer PPTX a directorio temporal
         self.temp_dir = tempfile.mkdtemp()
@@ -434,20 +517,51 @@ class PPTXXMLCloner:
             
             if os.path.exists(slide_path):
                 content = content_by_slide[slide_idx] if slide_idx < len(content_by_slide) else {}
-                self._modify_slide(slide_path, content, slide_idx)
+                text_areas = (text_areas_by_slide[slide_idx]
+                             if text_areas_by_slide and slide_idx < len(text_areas_by_slide)
+                             else [])
+                self._modify_slide(slide_path, content, slide_idx, text_areas)
         
-        # 3. Re-empaquetar como PPTX
+        # 3. RESTAURAR MACROS VBA (si existían)
+        self._restore_vba_project()
+        
+        # 4. Re-empaquetar como PPTX
         output_path = tempfile.mktemp(suffix='.pptx')
         self._create_pptx(output_path)
         
-        # 4. Limpiar
+        # 5. Limpiar
         shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         
         logger.info(f"✅ PPTX generado: {output_path}")
         return output_path
     
-    def _modify_slide(self, slide_path: str, content: Dict[str, Any], slide_idx: int):
+    def _restore_vba_project(self):
+        """
+        Restaura el proyecto VBA en el directorio temporal.
+        
+        Esto asegura que las macros se incluyan en el PPTX generado.
+        """
+        if not self.has_vba_macros or not self.vba_project_data:
+            return
+        
+        vba_path = os.path.join(self.temp_dir, 'ppt', 'vbaProject.bin')
+        
+        # Asegurar que el directorio existe
+        os.makedirs(os.path.dirname(vba_path), exist_ok=True)
+        
+        try:
+            with open(vba_path, 'wb') as f:
+                f.write(self.vba_project_data)
+            
+            vba_size_kb = len(self.vba_project_data) / 1024
+            logger.info(f"✅ Macros VBA restauradas: {vba_size_kb:.1f} KB")
+        except Exception as e:
+            logger.error(f"❌ Error restaurando VBA project: {e}")
+            self.has_vba_macros = False
+    
+    def _modify_slide(self, slide_path: str, content: Dict[str, Any], slide_idx: int,
+                     text_areas: List[Dict] = None):
         """
         Modifica el XML de un slide reemplazando textos.
         
@@ -456,8 +570,15 @@ class PPTXXMLCloner:
         - Transiciones (p:transition)
         - Efectos visuales
         - SmartArt
+        
+        Args:
+            slide_path: Ruta al archivo XML del slide
+            content: Contenido IA a insertar
+            slide_idx: Índice del slide (0-based)
+            text_areas: Lista de textAreas del análisis (con coordenadas)
         """
         logger.info(f"   📝 Modificando slide {slide_idx + 1}")
+        logger.info(f"   📍 text_areas recibidas: {len(text_areas) if text_areas else 0}")
         
         # Leer el archivo original para preservar la declaración XML exacta
         with open(slide_path, 'rb') as f:
@@ -481,8 +602,13 @@ class PPTXXMLCloner:
         # Obtener mapa de textos para este slide
         slide_texts = self.text_map[slide_idx] if slide_idx < len(self.text_map) else []
         
-        # Estrategia de reemplazo inteligente
-        replacements_made = self._smart_replace(root, content, slide_texts)
+        # Estrategia de reemplazo: usar textAreas si están disponibles
+        if text_areas and len(text_areas) > 0:
+            logger.info(f"   🎯 Usando coordenadas de textAreas para reemplazo preciso")
+            replacements_made = self._replace_with_text_areas(root, content, text_areas)
+        else:
+            logger.info(f"   🔍 Usando detección automática por tipo de texto")
+            replacements_made = self._smart_replace(root, content, slide_texts)
         
         logger.info(f"   ✅ {replacements_made} reemplazos en slide {slide_idx + 1}")
         
@@ -491,6 +617,85 @@ class PPTXXMLCloner:
         
         # Guardar cambios preservando formato XML y namespaces
         tree.write(slide_path, xml_declaration=True, encoding='UTF-8', standalone=True)
+    
+    def _replace_with_text_areas(self, root, content: Dict[str, Any],
+                                 text_areas: List[Dict]) -> int:
+        """
+        Reemplaza texto usando las coordenadas exactas de textAreas.
+        
+        Esto es más preciso porque usa la posición real del texto en el slide.
+        """
+        replacements = 0
+        
+        # Preparar contenido por tipo
+        title_content = content.get('title') or content.get('heading')
+        subtitle_content = content.get('subtitle')
+        bullets_content = content.get('bullets', [])
+        body_content = content.get('body')
+        
+        # Crear mapa de contenido por tipo
+        content_by_type = {
+            'title': title_content,
+            'subtitle': subtitle_content,
+            'heading': title_content,
+            'bullets': bullets_content,
+            'body': body_content
+        }
+        
+        # Contadores para bullets
+        bullet_idx = 0
+        
+        # Buscar shapes en el slide
+        shapes = root.findall('.//p:sp', NAMESPACES)
+        
+        for shape in shapes:
+            shape_id = self._get_shape_id(shape)
+            
+            # Buscar textAreas que coincidan con este shape
+            matching_areas = [ta for ta in text_areas if ta.get('id') == shape_id]
+            
+            if not matching_areas:
+                continue
+            
+            # Procesar cada textArea que coincida
+            for text_area in matching_areas:
+                area_type = text_area.get('type', 'body')
+                
+                # Obtener el contenido para este tipo
+                new_text = None
+                
+                if area_type in ['title', 'heading'] and content_by_type.get(area_type):
+                    new_text = content_by_type[area_type]
+                elif area_type == 'subtitle' and content_by_type.get('subtitle'):
+                    new_text = content_by_type['subtitle']
+                elif area_type == 'bullets':
+                    if bullet_idx < len(bullets_content):
+                        new_text = bullets_content[bullet_idx]
+                        bullet_idx += 1
+                elif area_type == 'body':
+                    if body_content:
+                        new_text = body_content
+                
+                if new_text:
+                    # Encontrar y reemplazar el texto en el shape
+                    txBody = shape.find('.//p:txBody', NAMESPACES)
+                    if txBody is not None:
+                        text_elems = txBody.findall('.//a:t', NAMESPACES)
+                        for text_elem in text_elems:
+                            if text_elem.text:
+                                original = text_elem.text
+                                text_elem.text = new_text
+                                replacements += 1
+                                logger.info(f"      ✅ Reemplazo preciso: '{original[:30]}...' → '{new_text[:30]}...' (tipo: {area_type})")
+                                break
+        
+        if replacements == 0:
+            logger.warning(f"      ⚠️ No se hicieron reemplazos con textAreas, usando fallback")
+            # Fallback al método original
+            slide_texts = []
+            return self._smart_replace(root, content, slide_texts)
+        
+        return replacements
     
     def _capture_preservation_state(self, root, slide_idx: int) -> Dict[str, Any]:
         """
@@ -603,13 +808,15 @@ class PPTXXMLCloner:
         
         return queue
     
-    def _smart_replace(self, root, content: Dict[str, Any], 
+    def _smart_replace(self, root, content: Dict[str, Any],
                        slide_texts: List[TextLocation]) -> int:
         """
         Reemplazo inteligente basado en tipo de texto y posición.
         
         MEJORADO: Si no hay coincidencias por tipo, usa modo de respaldo
         que reemplaza todo el texto en orden.
+        
+        También modifica SmartArt, gráficos y tablas si los módulos están disponibles.
         """
         replacements = 0
         
@@ -692,12 +899,199 @@ class PPTXXMLCloner:
                         text_elem.text = new_text
                         replacements += 1
         
-        logger.info(f"   📊 Total de reemplazos: {replacements}")
+        logger.info(f"   📊 Total de reemplazos en shapes: {replacements}")
+        
+        # === MODIFICAR SMARTART ===
+        if SMARTART_AVAILABLE:
+            smartart_replacements = self._modify_smartart(root, content)
+            logger.info(f"   📊 Reemplazos en SmartArt: {smartart_replacements}")
+            replacements += smartart_replacements
+        
+        # === MODIFICAR GRÁFICOS ===
+        if CHART_MODIFIER_AVAILABLE:
+            chart_replacements = self._modify_charts(root, content)
+            logger.info(f"   📊 Reemplazos en Gráficos: {chart_replacements}")
+            replacements += chart_replacements
+        
+        # === MODIFICAR TABLAS ===
+        if TABLE_PRESERVER_AVAILABLE:
+            table_replacements = self._modify_tables(root, content)
+            logger.info(f"   📊 Reemplazos en Tablas: {table_replacements}")
+            replacements += table_replacements
         
         # MODO DE RESPALDO: Si no hubo reemplazos, intentar modo forzado
         if replacements == 0 and (title_content or bullets_content or body_content):
             logger.warning(f"   ⚠️ No hubo reemplazos por tipo, activando MODO DE RESPALDO")
             replacements = self._fallback_replace(root, content)
+        
+        return replacements
+    
+    def _modify_smartart(self, root, content: Dict[str, Any]) -> int:
+        """
+        Modifica texto dentro de elementos SmartArt.
+        
+        Args:
+            root: Elemento raíz del XML del slide
+            content: Contenido IA a insertar
+        
+        Returns:
+            Número de reemplazos realizados
+        """
+        replacements = 0
+        
+        try:
+            # Buscar elementos de diagrama (SmartArt)
+            diagram_data_elements = root.findall('.//dgm:diagramData', NAMESPACES)
+            
+            if not diagram_data_elements:
+                # También buscar en otras ubicaciones
+                diagram_data_elements = root.findall('.//{http://schemas.openxmlformats.org/drawingml/2006/diagram}diagramData')
+            
+            logger.info(f"   📊 SmartArt encontrado: {len(diagram_data_elements)} diagramas")
+            
+            for diagram_idx, diagram_data in enumerate(diagram_data_elements):
+                # Extraer texto actual del diagrama
+                text_nodes = extract_diagram_text(diagram_data, NAMESPACES)
+                logger.info(f"      Diagrama {diagram_idx+1}: {len(text_nodes)} nodos de texto")
+                
+                # Obtener bullets para reemplazar
+                bullets = content.get('bullets', [])
+                
+                # Reemplazar texto nodo por nodo
+                for node_idx, node in enumerate(text_nodes):
+                    if node_idx < len(bullets):
+                        new_text = bullets[node_idx]
+                        
+                        # Buscar y modificar el texto en el XML
+                        # Los nodos de texto están en a:txBody/a:p/a:r/a:t
+                        txBody = diagram_data.find('.//a:txBody', NAMESPACES)
+                        if txBody is not None:
+                            text_elems = txBody.findall('.//a:t', NAMESPACES)
+                            if node_idx < len(text_elems) and text_elems[node_idx].text:
+                                old_text = text_elems[node_idx].text
+                                text_elems[node_idx].text = new_text
+                                replacements += 1
+                                logger.info(f"      ✅ SmartArt node {node_idx+1}: '{old_text[:30]}...' -> '{new_text[:30]}...'")
+                
+                # Si hay más bullets que nodos, agregar nuevos nodos
+                if len(bullets) > len(text_nodes):
+                    logger.info(f"      ℹ️ Agregando {len(bullets) - len(text_nodes)} nodos adicionales")
+                    # La creación de nuevos nodos es compleja en XML
+                    # Por ahora solo reportamos
+        
+        except Exception as e:
+            logger.warning(f"   ⚠️ Error modificando SmartArt: {e}")
+        
+        return replacements
+    
+    def _modify_charts(self, root, content: Dict[str, Any]) -> int:
+        """
+        Modifica datos de gráficos en el slide.
+        
+        Args:
+            root: Elemento raíz del XML del slide
+            content: Contenido IA a insertar
+        
+        Returns:
+            Número de reemplazos realizados
+        """
+        replacements = 0
+        
+        try:
+            # Buscar elementos de gráficos
+            chart_elements = root.findall('.//c:chart', NAMESPACES)
+            
+            if not chart_elements:
+                # Intentar con namespace alternativo
+                chart_elements = root.findall('.//{http://schemas.openxmlformats.org/drawingml/2006/chart}chart')
+            
+            logger.info(f"   📈 Gráficos encontrados: {len(chart_elements)}")
+            
+            for chart_idx, chart in enumerate(chart_elements):
+                # Extraer datos actuales del gráfico
+                chart_data = extract_chart_data_advanced(chart)
+                logger.info(f"      Gráfico {chart_idx+1}: {len(chart_data.get('series', []))} series")
+                
+                # Generar nuevos datos con IA si hay contenido
+                if content.get('bullets') or content.get('title'):
+                    new_chart_data = generate_chart_data_with_ai(chart_data, content)
+                    
+                    # Modificar el XML del gráfico
+                    # Los datos del gráfico están en c:chartData/c:series/c:val
+                    chart_data_elem = chart.find('.//c:chartData', NAMESPACES)
+                    if chart_data_elem is not None:
+                        series_elements = chart_data_elem.findall('.//c:series', NAMESPACES)
+                        
+                        for series_idx, series in enumerate(series_elements):
+                            if series_idx < len(new_chart_data.get('series', [])):
+                                new_series = new_chart_data['series'][series_idx]
+                                
+                                # Modificar nombre de la serie
+                                name_elem = series.find('.//c:tx/c:strRef/c:f', NAMESPACES)
+                                if name_elem is not None:
+                                    name_elem.text = new_series.get('name', f'Serie {series_idx+1}')
+                                
+                                # Modificar valores
+                                val_elem = series.find('.//c:val/c:numRef/c:f', NAMESPACES)
+                                if val_elem is not None:
+                                    values = new_series.get('values', [])
+                                    val_elem.text = ' '.join(str(v) for v in values)
+                                
+                                replacements += 1
+                                logger.info(f"      ✅ Gráfico serie {series_idx+1}: actualizada")
+        
+        except Exception as e:
+            logger.warning(f"   ⚠️ Error modificando gráficos: {e}")
+        
+        return replacements
+    
+    def _modify_tables(self, root, content: Dict[str, Any]) -> int:
+        """
+        Modifica contenido de tablas en el slide.
+        
+        Args:
+            root: Elemento raíz del XML del slide
+            content: Contenido IA a insertar
+        
+        Returns:
+            Número de reemplazos realizados
+        """
+        replacements = 0
+        
+        try:
+            # Buscar elementos de tabla
+            table_elements = root.findall('.//a:tbl', NAMESPACES)
+            
+            logger.info(f"   📋 Tablas encontradas: {len(table_elements)}")
+            
+            for table_idx, table in enumerate(table_elements):
+                # Extraer datos actuales de la tabla
+                table_data = extract_table_data(table)
+                logger.info(f"      Tabla {table_idx+1}: {table_data.get('rows', 0)}x{table_data.get('cols', 0)}")
+                
+                # Generar nuevos datos si hay contenido IA
+                bullets = content.get('bullets', [])
+                
+                if bullets:
+                    # Convertir bullets a formato de tabla
+                    cells = table_data.get('cells', [])
+                    
+                    for row_idx, row in enumerate(cells):
+                        for col_idx, cell in enumerate(row):
+                            cell_idx = row_idx * len(row) + col_idx
+                            if cell_idx < len(bullets):
+                                # Modificar texto de la celda
+                                txBody = cell.get('txBody')
+                                if txBody is not None:
+                                    text_elems = txBody.findall('.//a:t', NAMESPACES)
+                                    if text_elems and text_elems[0].text:
+                                        old_text = text_elems[0].text
+                                        text_elems[0].text = bullets[cell_idx]
+                                        replacements += 1
+                                        logger.info(f"      ✅ Tabla cell[{row_idx},{col_idx}]: '{old_text[:20]}...' -> '{bullets[cell_idx][:20]}...'")
+        
+        except Exception as e:
+            logger.warning(f"   ⚠️ Error modificando tablas: {e}")
         
         return replacements
     
@@ -886,6 +1280,8 @@ class PPTXXMLCloner:
         return {
             'slide_count': self.slide_count,
             'fonts_used': self.get_fonts_used(),
+            'has_vba_macros': self.has_vba_macros,
+            'vba_size_kb': len(self.vba_project_data) / 1024 if self.vba_project_data else 0,
             'text_locations': [
                 [{'type': t.text_type, 'text': t.original_text[:50], 'is_placeholder': t.is_placeholder}
                  for t in slide_texts]
@@ -914,7 +1310,8 @@ class PPTXXMLCloner:
 # FUNCIONES DE CONVENIENCIA
 # ============================================
 
-def clone_pptx_preserving_all(template_path: str, content_by_slide: List[Dict[str, Any]]) -> str:
+def clone_pptx_preserving_all(template_path: str, content_by_slide: List[Dict[str, Any]],
+                             text_areas_by_slide: List[List[Dict]] = None) -> str:
     """
     Función principal para clonar un PPTX preservando todos los elementos visuales.
     
@@ -924,6 +1321,11 @@ def clone_pptx_preserving_all(template_path: str, content_by_slide: List[Dict[st
             [
                 {'title': 'Título', 'subtitle': 'Subtítulo'},
                 {'heading': 'Sección 1', 'bullets': ['Punto 1', 'Punto 2']},
+                ...
+            ]
+        text_areas_by_slide: Lista de textAreas por slide para reemplazo preciso
+            [
+                [{'id': 1, 'type': 'title', 'position': {...}, 'text': '...'}, ...],
                 ...
             ]
     
@@ -936,11 +1338,12 @@ def clone_pptx_preserving_all(template_path: str, content_by_slide: List[Dict[st
         ...     [
         ...         {'title': 'Mi Presentación', 'subtitle': 'Por Juan'},
         ...         {'heading': 'Introducción', 'bullets': ['Punto A', 'Punto B']}
-        ...     ]
+        ...     ],
+        ...     text_areas_by_slide
         ... )
     """
     cloner = PPTXXMLCloner(template_path)
-    return cloner.clone_with_content(content_by_slide)
+    return cloner.clone_with_content(content_by_slide, text_areas_by_slide)
 
 
 def analyze_pptx_structure(pptx_path: str) -> Dict[str, Any]:

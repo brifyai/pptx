@@ -123,7 +123,11 @@ function AppContent() {
     handleSlideDuplicate,
     handleSlideDelete,
     handleSlideRename,
-    initializeSlides
+    initializeSlides,
+    undo,
+    redo,
+    canUndo,
+    canRedo
   } = useSlideManagement([], { showToast, showWarning, showDeleteConfirm, logActivity })
   
   // Estados adicionales
@@ -566,8 +570,20 @@ function AppContent() {
             showToast('Presentación guardada')
           }}
           onExport={() => setShowExport(true)}
-          onUndo={() => showToast('Deshacer - próximamente')}
-          onRedo={() => showToast('Rehacer - próximamente')}
+          onUndo={() => {
+            if (canUndo) {
+              undo()
+            } else {
+              showToast('No hay acciones para deshacer')
+            }
+          }}
+          onRedo={() => {
+            if (canRedo) {
+              redo()
+            } else {
+              showToast('No hay acciones para rehacer')
+            }
+          }}
           onAddSlide={() => {
             handleSlideAdd()
             showToast('Nueva diapositiva agregada')
@@ -717,8 +733,8 @@ function AppContent() {
             else if (action === 'about') showToast('Slide AI v1.0 - Presentaciones con IA')
             else setShowOnboarding(true)
           }}
-          canUndo={false}
-          canRedo={false}
+          canUndo={canUndo}
+          canRedo={canRedo}
           currentSlide={slides[currentSlide]}
         />
       )}

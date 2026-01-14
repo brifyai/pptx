@@ -353,10 +353,18 @@ def extract_background(slide) -> Dict[str, Any]:
     """
     Extrae información del fondo de la diapositiva
     Lee directamente del XML y usa los colores reales del tema
+    
+    Estrategia mejorada:
+    1. Buscar fondo en el slide XML
+    2. Si no hay, buscar en el layout
+    3. Si no hay, buscar en el slide master
+    4. Si no hay, usar color del tema (lt1 o bg1)
+    5. Si todo falla, usar el color dominante del preview
     """
     background = {
         "type": "solid",
-        "color": None
+        "color": None,
+        "source": "unknown"  # slide, layout, master, theme, preview
     }
     
     try:
@@ -364,12 +372,54 @@ def extract_background(slide) -> Dict[str, Any]:
         
         # Obtener colores del tema primero
         theme_colors = get_theme_colors(slide)
-        print(f"   🎨 Colores del tema: {theme_colors}")
         
-        # Obtener el XML del slide
-        slide_part = slide.part
-        slide_xml = slide_part.blob
-        root = etree.fromstring(slide_xml)
+        # Mapeo de colores del tema a nombres legibles
+        theme_color_names = {
+            'bg1': 'Fondo 1',
+            'bg2': 'Fondo 2',
+            'tx1': 'Texto 1',
+            'tx2': 'Texto 2',
+            'lt1': 'Claro 1',
+            'lt2': 'Claro 2',
+            'dk1': 'Oscuro 1',
+            'dk2': 'Oscuro 2',
+            'accent1': 'Acento 1',
+            'accent2': 'Acento 2',
+            'accent3': 'Acento 3',
+            'accent4': 'Acento 4',
+            'accent5': 'Acento 5',
+            'accent6': 'Acento 6',
+        }
+        
+        def apply_theme_color(scheme_val, source_name):
+            """Aplica un color del tema al fondo"""
+            if scheme_val in theme_colors:
+                background["color"] = theme_colors[scheme_val]
+                background["source"] = source_name
+                color_name = theme_color_names.get(scheme_val, scheme_val)
+                print(f"   ✅ Color del tema ({color_name}) aplicado desde {source_name}: {background['color']}")
+            else:
+                # Fallback a colores por defecto
+                scheme_colors_default = {
+                    'bg1': '#FFFFFF',
+                    'bg2': '#F2F2F2',
+                    'tx1': '#000000',
+                    'tx2': '#1F1F1F',
+                    'accent1': '#4472C4',
+                    'accent2': '#ED7D31',
+                    'accent3': '#A5A5A5',
+                    'accent4': '#FFC000',
+                    'accent5': '#5B9BD5',
+                    'accent6': '#70AD47',
+                    'dk1': '#000000',
+                    'lt1': '#FFFFFF',
+                    'dk2': '#1F1F1F',
+                    'lt2': '#EEECE1'
+                }
+                background["color"] = scheme_colors_default.get(scheme_val, '#FFFFFF')
+                background["source"] = f"{source_name}_default"
+                color_name = theme_color_names.get(scheme_val, scheme_val)
+                print(f"   ⚠️ Color por defecto ({color_name}) aplicado: {background['color']}")
         
         # Namespaces de PowerPoint
         namespaces = {
@@ -377,67 +427,46 @@ def extract_background(slide) -> Dict[str, Any]:
             'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
         }
         
-        # Buscar el elemento de fondo: p:cSld/p:bg
+        # ===== 1. Buscar en el slide XML =====
+        slide_part = slide.part
+        slide_xml = slide_part.blob
+        root = etree.fromstring(slide_xml)
+        
         bg_element = root.find('.//p:cSld/p:bg', namespaces)
         
         if bg_element is not None:
-            # Buscar fill sólido: bgPr/a:solidFill/a:srgbClr
+            # Color sólido directo
             solid_fill = bg_element.find('.//a:solidFill/a:srgbClr', namespaces)
             if solid_fill is not None:
                 color_val = solid_fill.get('val')
                 if color_val:
                     background["color"] = f"#{color_val}"
                     background["type"] = "solid"
-                    print(f"   ✅ Color de fondo extraído del XML: {background['color']}")
+                    background["source"] = "slide"
+                    print(f"   ✅ Color de fondo extraído del slide: {background['color']}")
                     return background
             
-            # Buscar fill con esquema de color: bgPr/a:solidFill/a:schemeClr
+            # Color del esquema
             scheme_fill = bg_element.find('.//a:solidFill/a:schemeClr', namespaces)
             if scheme_fill is not None:
                 scheme_val = scheme_fill.get('val')
-                print(f"   ℹ️ Fondo usa esquema de color: {scheme_val}")
-                
-                # Usar el color real del tema si está disponible
-                if scheme_val in theme_colors:
-                    background["color"] = theme_colors[scheme_val]
-                    print(f"   ✅ Color del tema aplicado: {background['color']}")
-                else:
-                    # Fallback a colores por defecto
-                    scheme_colors_default = {
-                        'bg1': '#FFFFFF',
-                        'bg2': '#F2F2F2',
-                        'tx1': '#000000',
-                        'tx2': '#1F1F1F',
-                        'accent1': '#4472C4',
-                        'accent2': '#ED7D31',
-                        'accent3': '#A5A5A5',
-                        'accent4': '#FFC000',
-                        'accent5': '#5B9BD5',
-                        'accent6': '#70AD47',
-                        'dk1': '#000000',
-                        'lt1': '#FFFFFF',
-                        'dk2': '#1F1F1F',
-                        'lt2': '#EEECE1'
-                    }
-                    background["color"] = scheme_colors_default.get(scheme_val, '#FFFFFF')
-                    print(f"   ⚠️ Color por defecto aplicado: {background['color']}")
-                
+                apply_theme_color(scheme_val, "slide")
                 return background
             
-            # Buscar gradiente
+            # Gradiente
             grad_fill = bg_element.find('.//a:gradFill', namespaces)
             if grad_fill is not None:
                 background["type"] = "gradient"
-                # Obtener el primer color del gradiente
                 first_color = grad_fill.find('.//a:srgbClr', namespaces)
                 if first_color is not None:
                     color_val = first_color.get('val')
                     if color_val:
                         background["color"] = f"#{color_val}"
-                        print(f"   ✅ Color de gradiente extraído: {background['color']}")
+                        background["source"] = "slide_gradient"
+                        print(f"   ✅ Color de gradiente extraído del slide: {background['color']}")
                         return background
         
-        # Si no hay elemento de fondo en el slide, buscar en el layout
+        # ===== 2. Buscar en el layout =====
         print(f"   ℹ️ No se encontró fondo en el slide, buscando en layout...")
         layout_part = slide.slide_layout.part
         layout_xml = layout_part.blob
@@ -450,43 +479,74 @@ def extract_background(slide) -> Dict[str, Any]:
                 color_val = solid_fill.get('val')
                 if color_val:
                     background["color"] = f"#{color_val}"
+                    background["type"] = "solid"
+                    background["source"] = "layout"
                     print(f"   ✅ Color de fondo extraído del layout: {background['color']}")
                     return background
             
             scheme_fill = bg_element.find('.//a:solidFill/a:schemeClr', namespaces)
             if scheme_fill is not None:
                 scheme_val = scheme_fill.get('val')
-                
-                # Usar el color real del tema
-                if scheme_val in theme_colors:
-                    background["color"] = theme_colors[scheme_val]
-                    print(f"   ✅ Color del tema (layout) aplicado: {background['color']}")
-                else:
-                    scheme_colors_default = {
-                        'bg1': '#FFFFFF',
-                        'bg2': '#F2F2F2',
-                        'tx1': '#000000',
-                        'tx2': '#1F1F1F',
-                        'accent1': '#4472C4',
-                        'accent2': '#ED7D31',
-                        'accent3': '#A5A5A5',
-                        'accent4': '#FFC000',
-                        'accent5': '#5B9BD5',
-                        'accent6': '#70AD47',
-                    }
-                    background["color"] = scheme_colors_default.get(scheme_val, '#FFFFFF')
-                    print(f"   ⚠️ Color por defecto (layout) aplicado: {background['color']}")
-                
+                apply_theme_color(scheme_val, "layout")
                 return background
+        
+        # ===== 3. Buscar en el slide master =====
+        print(f"   ℹ️ No se encontró fondo en el layout, buscando en master...")
+        try:
+            master = slide.slide_layout.slide_master
+            master_part = master.part
+            master_xml = master_part.blob
+            master_root = etree.fromstring(master_xml)
+            
+            bg_element = master_root.find('.//p:cSld/p:bg', namespaces)
+            if bg_element is not None:
+                solid_fill = bg_element.find('.//a:solidFill/a:srgbClr', namespaces)
+                if solid_fill is not None:
+                    color_val = solid_fill.get('val')
+                    if color_val:
+                        background["color"] = f"#{color_val}"
+                        background["type"] = "solid"
+                        background["source"] = "master"
+                        print(f"   ✅ Color de fondo extraído del master: {background['color']}")
+                        return background
+                
+                scheme_fill = bg_element.find('.//a:solidFill/a:schemeClr', namespaces)
+                if scheme_fill is not None:
+                    scheme_val = scheme_fill.get('val')
+                    apply_theme_color(scheme_val, "master")
+                    return background
+        except Exception as master_error:
+            print(f"   ⚠️ Error buscando en master: {master_error}")
+        
+        # ===== 4. Usar color del tema directamente =====
+        print(f"   ℹ️ No se encontró fondo explícito, usando color del tema...")
+        
+        # Preferir lt1 (usual para fondos claros) o bg1
+        if 'lt1' in theme_colors:
+            background["color"] = theme_colors['lt1']
+            background["source"] = "theme_lt1"
+            print(f"   ✅ Color del tema (lt1) aplicado: {background['color']}")
+        elif 'bg1' in theme_colors:
+            background["color"] = theme_colors['bg1']
+            background["source"] = "theme_bg1"
+            print(f"   ✅ Color del tema (bg1) aplicado: {background['color']}")
+        elif theme_colors:
+            # Usar el primer color del tema disponible
+            first_color = list(theme_colors.values())[0]
+            background["color"] = first_color
+            background["source"] = "theme_first"
+            print(f"   ✅ Primer color del tema aplicado: {background['color']}")
         
     except Exception as e:
         print(f"   ⚠️ Error extrayendo fondo del XML: {e}")
         import traceback
         traceback.print_exc()
     
-    # Si todo falla, usar blanco por defecto
-    background["color"] = "#FFFFFF"
-    print(f"   ℹ️ No se pudo detectar color de fondo, usando blanco por defecto")
+    # Si todo falla, #FFFFFF por defecto
+    if not background["color"]:
+        background["color"] = "#FFFFFF"
+        background["source"] = "default_white"
+        print(f"   ℹ️ No se pudo detectar color de fondo, usando blanco por defecto")
     
     return background
 
@@ -950,10 +1010,10 @@ def detect_animated_shapes(slide, prs) -> set:
         
         if not timing_found:
             print(f"   ℹ️ Slide no tiene animaciones detectadas en XML")
-            print(f"   🔍 Aplicando FALLBACK: detectar logos transparentes como posibles animaciones...")
+            print(f"   🔍 Aplicando FALLBACK MEJORADO: detectar solo elementos con alta probabilidad de animación...")
             
-            # FALLBACK: Detectar logos/imágenes pequeñas con transparencia como posibles animaciones
-            # Esto es una heurística porque LibreOffice no captura animaciones
+            # FALLBACK MEJORADO: Solo marcar elementos con alta probabilidad de animación
+            # NO marcar todas las imágenes - solo las que cumplen criterios estrictos
             from pptx.enum.shapes import MSO_SHAPE_TYPE
             from PIL import Image
             from io import BytesIO
@@ -964,18 +1024,21 @@ def detect_animated_shapes(slide, prs) -> set:
             print(f"   📏 Dimensiones del slide: {slide_width} x {slide_height} EMUs")
             
             picture_count = 0
+            high_prob_animations = 0
+            medium_prob_animations = 0
+            
             for shape in slide.shapes:
                 if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                     picture_count += 1
                     try:
-                        # Verificar si es pequeño (posible logo)
+                        # Verificar criterios para animación
                         width_ratio = shape.width / slide_width
                         height_ratio = shape.height / slide_height
-                        is_small = width_ratio < 0.25 and height_ratio < 0.25
+                        is_small = width_ratio < 0.15 and height_ratio < 0.15  # Más estricto: < 15%
                         
                         print(f"   📷 Imagen encontrada: shape_id={shape.shape_id}")
                         print(f"      Tamaño: {width_ratio:.1%} x {height_ratio:.1%} del slide")
-                        print(f"      ¿Es pequeña? {is_small}")
+                        print(f"      ¿Es pequeña (<15%)? {is_small}")
                         
                         # Verificar si tiene transparencia
                         image = shape.image
@@ -997,18 +1060,40 @@ def detect_animated_shapes(slide, prs) -> set:
                         
                         print(f"      ¿Tiene transparencia? {has_transparency}")
                         
-                        # MARCAR TODAS LAS IMÁGENES como posiblemente animadas
-                        # El usuario confirma que hay animaciones que no se ven en el preview de LibreOffice
-                        animated_ids.add(shape.shape_id)
-                        if has_transparency:
-                            print(f"   🎬 ✅ Shape {shape.shape_id} marcado como animado (imagen con transparencia)")
+                        # CRITERIOS MEJORADOS para marcar como animado:
+                        # ALTA PROBABILIDAD: imagen pequeña (<15%) + transparencia + posición en esquina
+                        # MEDIA PROBABILIDAD: imagen pequeña (<15%) + transparencia (sin importar posición)
+                        # NO ANIMADA: imágenes grandes o sin transparencia
+                        
+                        # Verificar si está en una esquina (común para logos animados)
+                        is_corner = (
+                            (shape.left < slide_width * 0.1 or shape.left > slide_width * 0.85) and
+                            (shape.top < slide_height * 0.1 or shape.top > slide_height * 0.85)
+                        )
+                        print(f"      ¿Está en esquina? {is_corner}")
+                        
+                        if is_small and has_transparency:
+                            if is_corner:
+                                # ALTA PROBABILIDAD - logo en esquina con transparencia
+                                animated_ids.add(shape.shape_id)
+                                high_prob_animations += 1
+                                print(f"   🎬 ✅ Shape {shape.shape_id} marcado como ALTA probabilidad (logo en esquina con transparencia)")
+                            else:
+                                # MEDIA PROBABILIDAD - imagen pequeña con transparencia
+                                animated_ids.add(shape.shape_id)
+                                medium_prob_animations += 1
+                                print(f"   🎬 ⚠️ Shape {shape.shape_id} marcado como MEDIA PROBABILIDAD (imagen pequeña con transparencia)")
                         else:
-                            print(f"   🎬 ✅ Shape {shape.shape_id} marcado como animado (imagen sin transparencia - posible logo con fondo)")
+                            # BAJA PROBABILIDAD - no marcar como animado
+                            print(f"   🎬 ❌ Shape {shape.shape_id} NO marcado (baja probabilidad de animación)")
+                        
                     except Exception as e:
                         print(f"      ⚠️ Error procesando imagen: {e}")
             
             print(f"   📊 Total de imágenes analizadas: {picture_count}")
-            print(f"   🎬 Total de animaciones detectadas por fallback: {len(animated_ids)}")
+            print(f"   🎬 Animaciones detectadas: ALTA={high_prob_animations}, MEDIA={medium_prob_animations}")
+            print(f"   ℹ️ Total marcado como animado: {len(animated_ids)}")
+            print(f"   ℹ️ NOTA: Solo se marcan elementos con ALTA/MEDIA probabilidad de animación")
         
     except Exception as e:
         print(f"⚠️ Error detectando animaciones: {e}")

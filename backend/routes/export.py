@@ -156,16 +156,35 @@ def _generate_pptx_task(template_path: str, data: str) -> str:
     Returns path to generated file.
     """
     try:
-        slides = []
+        slides_data = []
+        text_areas_by_slide = []
+        
         if data:
-            slides_data = json.loads(data) if isinstance(data, str) else data
-            slides = slides_data.get('slides', [])
+            parsed_data = json.loads(data) if isinstance(data, str) else data
+            slides_data = parsed_data.get('slides', [])
+            
+            # Extraer textAreas por slide para reemplazo preciso
+            for slide in slides_data:
+                text_areas = slide.get('textAreas', [])
+                text_areas_by_slide.append(text_areas)
         
         if template_path:
+            # Preparar contenido y textAreas para el clonador XML
             ai_content = {
-                'slides': [{'content': slide.get('content', {})} for slide in slides]
+                'slides': [{'content': slide.get('content', {})} for slide in slides_data]
             }
-            output_path = generate_presentation(template_path, ai_content)
+            
+            # Verificar si hay textAreas para usar reemplazo preciso
+            has_text_areas = any(len(ta) > 0 for ta in text_areas_by_slide)
+            
+            if has_text_areas:
+                logger.info(f"📍 Usando textAreas para reemplazo preciso: {sum(len(ta) for ta in text_areas_by_slide)} áreas")
+            
+            output_path = generate_presentation(
+                template_path,
+                ai_content,
+                text_areas_by_slide=text_areas_by_slide if has_text_areas else None
+            )
             
             # Cleanup template
             if os.path.exists(template_path):
@@ -174,7 +193,7 @@ def _generate_pptx_task(template_path: str, data: str) -> str:
             return output_path
         else:
             # Generate basic presentation without template
-            return _generate_basic_pptx(slides)
+            return _generate_basic_pptx(slides_data)
             
     except Exception as e:
         logger.error(f"❌ PPTX generation failed: {e}")
@@ -328,11 +347,23 @@ async def export_pptx(request: Request):
                 tmp.write(template_content)
                 template_path = tmp.name
             
+            # Preparar contenido y textAreas
             ai_content = {
                 'slides': [{'content': slide.get('content', {})} for slide in slides]
             }
             
-            output_path = generate_presentation(template_path, ai_content)
+            # Extraer textAreas para reemplazo preciso
+            text_areas_by_slide = [slide.get('textAreas', []) for slide in slides]
+            has_text_areas = any(len(ta) > 0 for ta in text_areas_by_slide)
+            
+            if has_text_areas:
+                logger.info(f"📍 Enviando {sum(len(ta) for ta in text_areas_by_slide)} textAreas al clonador")
+            
+            output_path = generate_presentation(
+                template_path,
+                ai_content,
+                text_areas_by_slide=text_areas_by_slide if has_text_areas else None
+            )
             
             logger.info(f"✅ Presentación generada: {output_path}")
             

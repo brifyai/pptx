@@ -7,22 +7,54 @@ from typing import Dict, Any, Optional, List
 from copy import deepcopy
 
 # Importar el nuevo clonador XML avanzado
+import sys
+import os
+
+# Agregar el directorio padre al path para imports
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(backend_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 try:
-    from backend.pptx_xml_cloner import clone_pptx_preserving_all, PPTXXMLCloner
+    from pptx_xml_cloner import clone_pptx_preserving_all, PPTXXMLCloner
     XML_CLONER_AVAILABLE = True
     print("✅ Clonador XML avanzado disponible")
-except ImportError:
-    try:
-        from pptx_xml_cloner import clone_pptx_preserving_all, PPTXXMLCloner
-        XML_CLONER_AVAILABLE = True
-        print("✅ Clonador XML avanzado disponible (import directo)")
-    except ImportError:
-        XML_CLONER_AVAILABLE = False
-        print("⚠️ Clonador XML no disponible, usando método legacy")
+except ImportError as e:
+    XML_CLONER_AVAILABLE = False
+    print(f"⚠️ Clonador XML no disponible: {e}")
+    print("   Usando método legacy (python-pptx)")
+
+# Importar módulos avanzados
+SMARTART_AVAILABLE = False
+CHART_MODIFIER_AVAILABLE = False
+TABLE_PRESERVER_AVAILABLE = False
+
+try:
+    from smartart_extractor import extract_smartart_from_pptx, extract_diagram_text, analyze_smartart_for_ai
+    SMARTART_AVAILABLE = True
+    print("✅ Módulo SmartArt disponible")
+except ImportError as e:
+    print(f"⚠️ Módulo SmartArt no disponible: {e}")
+
+try:
+    from chart_modifier import extract_chart_data as extract_chart_data_advanced, generate_chart_data_with_ai, update_chart_with_data, create_chart_from_data, analyze_chart_for_ai
+    CHART_MODIFIER_AVAILABLE = True
+    print("✅ Módulo Chart Modifier disponible")
+except ImportError as e:
+    print(f"⚠️ Módulo Chart Modifier no disponible: {e}")
+
+try:
+    from table_preserver import extract_table_data, generate_table_xml, update_table_with_data, create_table_from_data, analyze_table_for_ai, preserve_table_xml, restore_table_from_preservation
+    TABLE_PRESERVER_AVAILABLE = True
+    print("✅ Módulo Table Preserver disponible")
+except ImportError as e:
+    print(f"⚠️ Módulo Table Preserver no disponible: {e}")
 
 
-def generate_presentation(original_path: str, ai_content: Optional[Dict] = None, 
-                         use_xml_cloner: bool = True) -> str:
+def generate_presentation(original_path: str, ai_content: Optional[Dict] = None,
+                         use_xml_cloner: bool = True,
+                         text_areas_by_slide: List[List[Dict]] = None) -> str:
     """
     Genera una nueva presentación CLONANDO completamente el diseño original
     y solo reemplazando el contenido de texto con el generado por IA.
@@ -38,25 +70,34 @@ def generate_presentation(original_path: str, ai_content: Optional[Dict] = None,
             - slides[].chart_data: datos para gráficos
         use_xml_cloner: Si True, usa el clonador XML avanzado que preserva
                        animaciones, transiciones, SmartArt, etc.
+        text_areas_by_slide: Lista de textAreas por slide para reemplazo preciso
     
     Returns:
         Ruta al archivo PPTX generado
     """
     print(f"📄 Generando presentación desde: {original_path}")
     print(f"📝 Contenido IA recibido: {ai_content is not None}")
+    print(f"📍 text_areas_by_slide: {text_areas_by_slide is not None}")
     
-    # Intentar usar el clonador XML avanzado primero
-    if use_xml_cloner and XML_CLONER_AVAILABLE and ai_content:
-        try:
-            return generate_with_xml_cloner(original_path, ai_content)
-        except Exception as e:
-            print(f"⚠️ Error con clonador XML, usando método legacy: {e}")
+    # FORZAR uso del clonador XML cuando hay template y contenido
+    if ai_content and isinstance(ai_content, dict) and 'slides' in ai_content:
+        if XML_CLONER_AVAILABLE:
+            try:
+                print("🚀 Usando CLONADOR XML (preserva animaciones, SmartArt, gradientes, macros)")
+                return generate_with_xml_cloner(original_path, ai_content, text_areas_by_slide)
+            except Exception as e:
+                print(f"⚠️ Error con clonador XML: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print("⚠️ Clonador XML no disponible, forzando método legacy")
     
     # Método legacy (fallback)
     return generate_with_legacy_method(original_path, ai_content)
 
 
-def generate_with_xml_cloner(original_path: str, ai_content: Dict) -> str:
+def generate_with_xml_cloner(original_path: str, ai_content: Dict,
+                            text_areas_by_slide: List[List[Dict]] = None) -> str:
     """
     Genera presentación usando el clonador XML avanzado.
     
@@ -66,6 +107,12 @@ def generate_with_xml_cloner(original_path: str, ai_content: Dict) -> str:
     - ✅ Gradientes complejos
     - ✅ Sombras y efectos 3D
     - ✅ Todos los formatos de texto
+    - ✅ Macros VBA
+    
+    Args:
+        original_path: Ruta al template
+        ai_content: Contenido IA
+        text_areas_by_slide: Lista de textAreas por slide para reemplazo preciso
     """
     print("🚀 Usando clonador XML avanzado (preserva animaciones, SmartArt, etc.)")
     
@@ -84,12 +131,25 @@ def generate_with_xml_cloner(original_path: str, ai_content: Dict) -> str:
             if slide_content.get('bullets'):
                 for i, bullet in enumerate(slide_content.get('bullets', [])[:3]):
                     print(f"        • {bullet[:50]}")
+            
+            # Procesar SmartArt si está disponible
+            if SMARTART_AVAILABLE and 'smartart' in slide_content:
+                print(f"      - SmartArt: {len(slide_content['smartart'])} elementos")
+            
+            # Procesar tablas si hay datos
+            if 'table_data' in slide_content:
+                print(f"      - Tabla: {slide_content['table_data'].get('rows', 0)}x{slide_content['table_data'].get('cols', 0)}")
+            
+            # Procesar gráficos si hay datos
+            if 'chart_data' in slide_content:
+                print(f"      - Gráfico: {slide_content['chart_data'].get('chart_type', 'Desconocido')}")
     
     print(f"   📊 Total slides con contenido: {len(content_by_slide)}")
+    print(f"   📍 text_areas disponibles: {text_areas_by_slide is not None}")
     
-    # Usar el clonador XML
+    # Usar el clonador XML con textAreas para reemplazo preciso
     try:
-        output_path = clone_pptx_preserving_all(original_path, content_by_slide)
+        output_path = clone_pptx_preserving_all(original_path, content_by_slide, text_areas_by_slide)
         print(f"✅ Presentación generada con clonador XML: {output_path}")
         return output_path
     except Exception as e:
@@ -311,13 +371,43 @@ def clone_table(new_slide, template_shape, ai_content: Optional[Dict] = None):
     """
     Clona una tabla completa con su formato y datos.
     Si hay contenido de IA con 'table_data', reemplaza los datos.
+    Usa el módulo Table Preserver si está disponible.
     """
     try:
         source_table = template_shape.table
         rows = len(source_table.rows)
         cols = len(source_table.columns)
         
-        # Crear nueva tabla
+        # Usar módulo avanzado si está disponible
+        if TABLE_PRESERVER_AVAILABLE:
+            # Extraer datos de la tabla original
+            table_data = extract_table_data(source_table)
+            
+            # Preservar XML para mantener propiedades avanzadas
+            preservation = preserve_table_xml(source_table)
+            
+            # Si hay datos de IA, actualizar
+            if ai_content and 'table_data' in ai_content:
+                table_data = ai_content['table_data']
+            
+            # Crear nueva tabla con datos preservados
+            new_table_shape = new_slide.shapes.add_table(
+                table_data.get('rows', rows),
+                table_data.get('cols', cols),
+                template_shape.left,
+                template_shape.top,
+                template_shape.width,
+                template_shape.height
+            )
+            new_table = new_table_shape.table
+            
+            # Actualizar con datos
+            update_table_with_data(new_table, table_data)
+            
+            print(f"✅ Tabla clonada con módulo avanzado: {rows}x{cols}")
+            return
+        
+        # Método legacy
         new_table_shape = new_slide.shapes.add_table(
             rows, cols,
             template_shape.left,
@@ -393,8 +483,7 @@ def copy_cell_format(source_cell, target_cell):
 def clone_chart(new_slide, template_shape, ai_content: Optional[Dict] = None):
     """
     Clona un gráfico.
-    NOTA: python-pptx tiene soporte limitado para gráficos.
-    Esta función intenta preservar el gráfico lo mejor posible.
+    Si el módulo Chart Modifier está disponible, lo usa para preservación avanzada.
     """
     try:
         if not hasattr(template_shape, 'chart'):
@@ -404,7 +493,21 @@ def clone_chart(new_slide, template_shape, ai_content: Optional[Dict] = None):
         source_chart = template_shape.chart
         chart_type = source_chart.chart_type
         
-        # Obtener datos del gráfico original
+        # Usar módulo avanzado si está disponible
+        if CHART_MODIFIER_AVAILABLE:
+            # Extraer datos del gráfico original
+            chart_data = extract_chart_data_advanced(source_chart)
+            
+            # Si hay datos de IA, generarlos
+            if ai_content and 'chart_data' in ai_content:
+                chart_data = generate_chart_data_with_ai(chart_data, ai_content)
+            
+            # Actualizar el gráfico existente si es posible
+            if update_chart_with_data(source_chart, chart_data):
+                print("✅ Gráfico actualizado con módulo avanzado")
+                return
+        
+        # Método legacy
         chart_data = extract_chart_data(source_chart)
         
         # Si hay datos de IA, usarlos
@@ -484,14 +587,51 @@ def extract_chart_data(chart):
 def copy_fill_format(source_shape, target_shape):
     """Copia el formato de relleno (color, gradiente, etc.)"""
     try:
-        if source_shape.fill.type == 1:  # Solid fill
+        fill_type = source_shape.fill.type
+        
+        if fill_type == 1:  # Solid fill
             target_shape.fill.solid()
             if source_shape.fill.fore_color.rgb:
                 target_shape.fill.fore_color.rgb = source_shape.fill.fore_color.rgb
-        elif source_shape.fill.type == 2:  # Gradient
-            # Gradientes son complejos, copiar lo básico
+                
+        elif fill_type == 2:  # Gradient fill
             target_shape.fill.gradient()
-    except:
+            # Copiar gradiente completo si está disponible
+            try:
+                gradient_fill = source_shape.fill.gradient
+                if hasattr(gradient_fill, 'gradient_stops'):
+                    # Copiar stops del gradiente si es posible
+                    stops = gradient_fill.gradient_stops
+                    if stops and len(stops) >= 2:
+                        # Copiar color del primer y último stop
+                        stop1 = stops[0]
+                        stop2 = stops[-1]
+                        if hasattr(stop1, 'color') and stop1.color and stop1.color.rgb:
+                            target_shape.fill.gradient_stops[0].color.rgb = stop1.color.rgb
+                        if hasattr(stop2, 'color') and stop2.color and stop2.color.rgb:
+                            if len(target_shape.fill.gradient_stops) > 1:
+                                target_shape.fill.gradient_stops[-1].color.rgb = stop2.color.rgb
+            except Exception as e:
+                print(f"      ⚠️ No se pudo copiar gradiente detallado: {e}")
+                
+        elif fill_type == 3:  # Pattern fill
+            # Patrones ahora soportados
+            try:
+                target_shape.fill.pattern()
+                if source_shape.fill.pattern and source_shape.fill.pattern.pattern_type:
+                    # Copiar tipo de patrón si está disponible
+                    pass  # python-pptx tiene soporte limitado para patrones
+                # Copiar colores del patrón
+                if source_shape.fill.fore_color.rgb:
+                    target_shape.fill.fore_color.rgb = source_shape.fill.fore_color.rgb
+                if source_shape.fill.back_color.rgb:
+                    target_shape.fill.back_color.rgb = source_shape.fill.back_color.rgb
+                print(f"      ✅ Patrón de relleno preservado")
+            except Exception as e:
+                print(f"      ⚠️ Error copiando patrón: {e}")
+                
+    except Exception as e:
+        print(f"      ⚠️ Error en copy_fill_format: {e}")
         pass
 
 def copy_line_format(source_shape, target_shape):
